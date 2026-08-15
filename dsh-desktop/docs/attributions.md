@@ -4,7 +4,7 @@ DSH Desktop 集成了大量开源组件。本文件汇总主要第三方项目�
 
 ## 核心第三方项目
 
-| 项目 | 版本（随 v0.3.5 打包） | 许可证 | 来源 |
+| 项目 | 版本（随 v1.0.0 打包） | 许可证 | 来源 |
 |---|---|---|---|
 | [Zat-DSH Engine](https://github.com/mishibeikejie/zat-dsh-engine) | 0.4.0 | MIT | 设置 → 插件 → 插件市场（完整替换旧市场，随 v0.3.6 发布） |
 | [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) | 0.12.2 | MIT | 侧边栏工作台 bundle |

@@ -177,8 +177,21 @@ export function Sidebar(props: { ctx: Context; store: SidebarStore }) {
   // snapshot's prefs, so flipping the setting re-renders and re-applies
   // immediately; the cleanup removes both on unmount/boundary swap so a
   // crashed sidebar never leaves them behind.
-  const titleBarCompat = snapshot.prefs.titleBarCompat
-  const titleBarStrip = snapshot.prefs.titleBarStripPx
+  // DSH Desktop auto-detection: the desktop shell's preload announces its
+  // self-drawn title bar height on <html data-dsh-title-bar-height="36">.
+  // A fixed-position panel ignores the shell's body padding-top, so without
+  // this the top tab strip (Explorer / Git / …) would sit underneath the
+  // title bar. Auto mode follows the announced height; the manual pref, when
+  // on, keeps winning (its height stays user-controlled).
+  const desktopTitleBarStrip = useMemo(() => {
+    const raw = document.documentElement.getAttribute('data-dsh-title-bar-height')
+    const value = raw === null ? Number.NaN : Number(raw)
+    return Number.isFinite(value) && value > 0 ? value : undefined
+  }, [])
+  const titleBarCompat = snapshot.prefs.titleBarCompat || desktopTitleBarStrip !== undefined
+  const titleBarStrip = snapshot.prefs.titleBarCompat
+    ? snapshot.prefs.titleBarStripPx
+    : desktopTitleBarStrip ?? snapshot.prefs.titleBarStripPx
   useEffect(() => {
     const root = document.documentElement
     if (titleBarCompat) {

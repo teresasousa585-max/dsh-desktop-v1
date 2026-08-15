@@ -270,6 +270,7 @@ node dsh-desktop/scripts/sync-companion-plugins.js ~/.dsh --with-patches
 - **历史会话打不开（`SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable`）**：dsh-agent-teams / dsh-message-edit / dsh-web-search-exa 等插件写入的自定义会话事件不在内置核心的事件词汇表内导致。v0.3.3 起打包时已自动修补内置 `@deepseek-ai/dsh-session`；旧版本无需重装，一条命令修复：`npx dsh-session-history-fix`（幂等，可重复运行；改完重启应用即可）。
 - **无法打开文件夹（`directory picker failed: ... win32 folder dialog worker exited...`）**：v0.3.4 已根治（koffi@3.1.5 + 启动预检自动降级 browse 选择器）。旧版本请升级到 0.3.4。
 - **启动失败（`dsh web 启动失败（退出码 1）`）**：v0.3.4 会自动进入安全模式或自愈并重试，弹窗内直接显示最近日志。日志出现 `plugin tree failed to load` = 插件配置不兼容（自动禁用问题插件）；出现 `EPERM ... symlink` = 目录联接被拒（自动备份重建）；日志戛然而止且退出码 `3221225477`（0xC0000005）= koffi 原生崩溃（0.3.4 已换修复版）。
+- **安装后启动即弹「应用初始化失败：home is not defined」**：v0.3.8 已修复（启动路径上的 settings 注册防护函数 `applySettingsSectionGuard` 缺少 `home` 变量声明，启动必现崩溃）。请升级到 v0.3.8，或从 GitHub / Gitee release 下载最新安装包。
 - **设置页看不到插件设置（识图插件 / 自定义提示词 / 思考强度 / 插件市场）**：v0.3.4 已修复 agent 更新后白名单丢失的问题；仍不可见时重启应用一次，必要时查看 `desktop.log` 中「提示词暴露补丁」记录。
 - **客户端更新点了「立即重启」后仍提示有待安装的更新**：v0.3.4 起会识别「客户端更新未完成」并提供重试安装 / 打开更新日志；若反复出现，把 `%APPDATA%\DSH Desktop\updates\apply-update.log` 发给技术支持。
 - **如何手动安装第三方插件**：推荐在设置页「插件市场」（Zat-DSH Engine）搜索并安装（支持 npm 包名、`github:owner/repo#分支` 与镜像源）；安装完成后按提示重启服务。如果本机另装了 dsh CLI，也可以执行 `dsh plugin --profile web add <包名或 github 源>`，效果相同。

@@ -6826,8 +6826,13 @@ window.__ModuleLoader__.load({
 					document.body.removeAttribute("data-dsh-sidebar-collapsed");
 				};
 			}, [collapsed]);
-			const titleBarCompat = snapshot.prefs.titleBarCompat;
-			const titleBarStrip = snapshot.prefs.titleBarStripPx;
+			const desktopTitleBarStrip = (0, react.useMemo)(() => {
+				const raw = document.documentElement.getAttribute("data-dsh-title-bar-height");
+				const value = raw === null ? Number.NaN : Number(raw);
+				return Number.isFinite(value) && value > 0 ? value : void 0;
+			}, []);
+			const titleBarCompat = snapshot.prefs.titleBarCompat || desktopTitleBarStrip !== void 0;
+			const titleBarStrip = snapshot.prefs.titleBarCompat ? snapshot.prefs.titleBarStripPx : desktopTitleBarStrip ?? snapshot.prefs.titleBarStripPx;
 			(0, react.useEffect)(() => {
 				const root = document.documentElement;
 				if (titleBarCompat) {

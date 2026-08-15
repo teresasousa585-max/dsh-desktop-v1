@@ -4,46 +4,18 @@
 
 A ready-to-use Windows desktop client wrapping [@deepseek-ai/dsh](https://www.npmjs.com/package/@deepseek-ai/dsh) (DeepSeek Harness).
 
+> **Fork notice**: This repository is a modified fork of [myYangyunfan/dsh_desktop](https://github.com/myYangyunfan/dsh_desktop), maintained by **Ethereal**, re-versioned as v1. Licensed under MIT. Neither the original project nor this fork is affiliated with DeepSeek or Tencent.
+
 ---
 
 ## Download & Install
 
-### International users (GitHub, single-file download)
-
-> GitHub has no single-file size limit — download the complete installer directly.
+> GitHub only for now (Gitee China mirror not yet available).
 
 | File | Description | Size |
 | --- | --- | --- |
-| [Portable exe](https://github.com/myYangyunfan/dsh_desktop/releases/latest/download/DSH-Desktop-0.3.3-portable-x64.exe) | No install needed, double-click to run | ~126 MB |
-| [Setup exe](https://github.com/myYangyunfan/dsh_desktop/releases/latest/download/DSH-Desktop-Setup-0.3.3-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
-
-### China users (Gitee, split-part download)
-
-> Gitee has a 100 MB single-file limit, so installers are split into 2 parts. Download both and merge.
-
-1. Download the following files into **the same folder**:
-
-   **Portable** (no install, double-click to run, USB-friendly):
-   - [part1](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-0.3.3-portable-x64.exe.part1) (~95 MB)
-   - [part2](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-0.3.3-portable-x64.exe.part2) (~22 MB)
-
-   **Setup** (installs to system, creates desktop/start menu shortcuts):
-   - [part1](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-Setup-0.3.3-x64.exe.part1) (~95 MB)
-   - [part2](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-Setup-0.3.3-x64.exe.part2) (~22 MB)
-
-2. Download [merge.bat](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/merge.bat), place it in the same folder, and double-click to automatically merge the exe.
-
-   merge.bat notes: it uses ASCII messages and Windows-standard CRLF line endings only (no code-page switching), so it works on any locale. The window stays open at `pause` after merging. If you see `[MISSING]` / `[FAILED]`, re-download the parts and run it again.
-
-   Prefer manual merge? Run this in CMD:
-
-   ```cmd
-   :: Portable
-   copy /b DSH-Desktop-0.3.3-portable-x64.exe.part1 + DSH-Desktop-0.3.3-portable-x64.exe.part2 DSH-Desktop-0.3.3-portable-x64.exe
-
-   :: Setup
-   copy /b DSH-Desktop-Setup-0.3.3-x64.exe.part1 + DSH-Desktop-Setup-0.3.3-x64.exe.part2 DSH-Desktop-Setup-0.3.3-x64.exe
-   ```
+| [Portable exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.0-portable-x64.exe) | No install needed, double-click to run | ~126 MB |
+| [Setup exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.0-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
 
 **First run**: A loading animation appears briefly, then the DeepSeek Harness Web UI loads. If you haven't configured an API Key yet, set it up in the UI to get started (same as the `dsh` CLI).
 

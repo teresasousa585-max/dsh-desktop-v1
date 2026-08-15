@@ -772,7 +772,7 @@ var HarnessPet = (function(exports) {
 		enabled: true,
 		size: 112,
 		opacity: .95,
-		reducedMotion: false,
+		reducedMotion: true,
 		debugState: "auto",
 		autoCycle: false,
 		position: null

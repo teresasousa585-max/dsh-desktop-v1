@@ -13,6 +13,7 @@ const dirs = [
   ['split-v031', '0.3.1'],
   ['split-v032', '0.3.2'],
   ['split-v033', '0.3.3'],
+  ['split-v038', '0.3.8'],
 ];
 
 function buildBat(version) {

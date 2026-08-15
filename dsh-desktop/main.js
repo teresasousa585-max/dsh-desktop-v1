@@ -14,7 +14,7 @@
 // modules (sharp, node-pty, koffi, ...) match the Node ABI they were
 // installed for. We deliberately never rebuild them against Electron.
 
-const { app, BrowserWindow, Menu, Tray, shell, dialog, Notification, ipcMain, clipboard, crashReporter } = require('electron');
+const { app, BrowserWindow, Menu, Tray, shell, dialog, Notification, ipcMain, clipboard, crashReporter, screen } = require('electron');
 const { spawn, spawnSync } = require('node:child_process');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -964,10 +964,10 @@ async function restartService() {
   }
 }
 
-async // 探测 overlay agent 本身能否运行（--version 快速退出 0 即视为可运行）。
+// 探测 overlay agent 本身能否运行（--version 快速退出 0 即视为可运行）。
 // 用于区分「更新包坏了」与「其它原因（profile patch / 配置损坏等）导致的启动
 // 失败」，避免把后者误判为更新问题、诱导用户回退一个健康的新版本。
-function probeOverlayAgent(bin) {
+async function probeOverlayAgent(bin) {
   return new Promise((resolve) => {
     const nodeBin = nodeExe();
     if (!fs.existsSync(nodeBin) || !fs.existsSync(bin)) return resolve(false);
@@ -1123,10 +1123,12 @@ function createWindow(opts = {}) {
     minHeight: 640,
     show: false,
     title: 'DSH Desktop',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#00000000',
     icon: path.join(__dirname, 'assets', 'icon.png'),
-    // 风格化无边框窗口：去掉原生标题栏/菜单栏，自绘玻璃栏 + Win11 原生圆角。
-    ...(IS_WIN ? { frame: false, roundedCorners: true } : {}),
+    transparent: true,
+    // 透明窗口 + 全窗 CSS backdrop-filter 磨砂层（preload 负责）：
+    // 桌面会被整层模糊成毛玻璃，既保留透明质感，又不会清晰透出其他窗口。
+    ...(IS_WIN ? { frame: false, roundedCorners: false } : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -1209,8 +1211,21 @@ function createWindow(opts = {}) {
       mainWindow.webContents.send('chrome:maximized', mainWindow.isMaximized());
     }
   };
-  mainWindow.on('maximize', sendMaxState);
-  mainWindow.on('unmaximize', sendMaxState);
+  mainWindow.on('maximize', () => { mainWindow.__fakeMax = true; sendMaxState(); });
+  mainWindow.on('unmaximize', () => {
+    mainWindow.__fakeMax = false;
+    if (mainWindow.__normalBounds) {
+      const b = mainWindow.__normalBounds;
+      mainWindow.__normalBounds = null;
+      // 透明窗口 unmaximize 后可能仍保持放大尺寸，延迟一帧强制恢复普通尺寸。
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isMaximized()) {
+          mainWindow.setBounds(b, false);
+        }
+      }, 0);
+    }
+    sendMaxState();
+  });
   mainWindow.on('enter-full-screen', sendMaxState);
   mainWindow.on('leave-full-screen', sendMaxState);
 
@@ -1689,13 +1704,27 @@ async function runUpdateFlow(manual) {
 const lastNotifyAt = new Map(); // sessionId -> timestamp (per-session rate-limit)
 let lastGlobalNotifyAt = 0; // 全局限流：短时间窗口内至多一条，避免多会话同时完成刷屏
 
+// 应用内玻璃通知卡片（renderer 侧渲染）
+function sendGlassToast(title, body) {
+  try {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('dsh:toast', { title, body });
+    }
+  } catch {}
+}
+
 function onSessionTurnEnd(info) {
   log('notify', 'DEBUG turn detected: ' + JSON.stringify({ sid: info.sessionId, title: info.title, notifyOnTurnEnd, quitting, vis: mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible(), foc: mainWindow && !mainWindow.isDestroyed() && mainWindow.isFocused(), curSid: currentSessionId }));
   if (!notifyOnTurnEnd || quitting) { log('notify', 'DEBUG skip: notifyOnTurnEnd=' + notifyOnTurnEnd + ' quitting=' + quitting); return; }
   // 主窗可见且聚焦：用户正在操作，不弹通知打扰。最小化/隐藏/失焦时不拦截。
   // 「当前正在观看的会话」不再单独拦截：同一会话在后台完成时（窗口被遮挡、
   // 最小化或切走）正是最需要系统提醒的场景，日志证实旧逻辑在这里把提醒全部吞掉。
-  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() && mainWindow.isFocused()) { log('notify', 'DEBUG skip: window visible+focused'); return; }
+  if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() && mainWindow.isFocused()) {
+    // 窗口可见且聚焦：不弹系统通知，改用应用内玻璃卡片。
+    sendGlassToast(info.title || 'DSH 任务完成', info.body || '会话任务已完成');
+    log('notify', 'DEBUG skip native: visible+focused, in-app glass toast');
+    return;
+  }
   const now = Date.now();
   const last = lastNotifyAt.get(info.sessionId) || 0;
   if (now - last < 30000) return; // 同一会话：30s 内至多一条
@@ -1752,22 +1781,24 @@ function repoUrls() {
   const repos = clientUpdater.resolveRepos();
   return {
     github: 'https://github.com/' + repos.github,
-    gitee: 'https://gitee.com/' + repos.gitee,
+    gitee: repos.gitee ? 'https://gitee.com/' + repos.gitee : '',
   };
 }
 
 async function showAbout() {
   const urls = repoUrls();
+  const hasGitee = !!urls.gitee;
+  const buttons = hasGitee ? ['复制 GitHub 地址', '复制 Gitee 地址', '确定'] : ['复制 GitHub 地址', '确定'];
   const { response } = await showBox({
     type: 'info',
     title: '关于 DSH Desktop',
     message: 'DSH Desktop ' + APP_VERSION,
     detail: 'DeepSeek Harness 桌面客户端\n\nagent 版本：' + dshVersion() + '（' + dshVersionSource() + '）\n数据目录：' + userDataDir + '\nDSH_HOME：' + (isWslMode() ? 'WSL：' + wslBackend.installDirLinux() : (dshHome || '（dsh 默认）')) +
-      '\n\n项目仓库：\n  GitHub: ' + urls.github + '\n  Gitee:  ' + urls.gitee,
-    buttons: ['复制 GitHub 地址', '复制 Gitee 地址', '确定'],
+      '\n\n项目仓库：\n  GitHub: ' + urls.github + (hasGitee ? '\n  Gitee:  ' + urls.gitee : ''),
+    buttons,
   });
   if (response === 0) clipboard.writeText(urls.github);
-  else if (response === 1) clipboard.writeText(urls.gitee);
+  else if (hasGitee && response === 1) clipboard.writeText(urls.gitee);
 }
 
 function registerChromeIpc() {
@@ -1842,13 +1873,42 @@ function registerChromeIpc() {
     shell.openPath(logsDir);
     return { ok: true };
   });
-  ipcMain.handle('chrome:window', (event, { action } = {}) => {
+  ipcMain.handle('chrome:window', (event, { action, x, y } = {}) => {
     if (!mainWindow || event.sender !== mainWindow.webContents) return null;
     switch (action) {
       case 'minimize': mainWindow.minimize(); break;
-      case 'toggle-maximize': mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize(); break;
+      case 'toggle-maximize':
+        if (mainWindow.__fakeMax) {
+          mainWindow.__fakeMax = false;
+          if (mainWindow.__normalBounds) {
+            mainWindow.setBounds(mainWindow.__normalBounds, false);
+            mainWindow.__normalBounds = null;
+          }
+        } else {
+          mainWindow.__normalBounds = mainWindow.getBounds();
+          mainWindow.__fakeMax = true;
+          try {
+            const display = screen.getDisplayMatching(mainWindow.getBounds());
+            mainWindow.setBounds(display.workArea, false);
+          } catch (_e) {
+            // 万一拿不到显示器，退回原生最大化
+            mainWindow.maximize();
+          }
+        }
+        try { mainWindow.webContents.send('chrome:maximized', !!mainWindow.__fakeMax); } catch {}
+        break;
       case 'close': mainWindow.close(); break;
-      case 'is-maximized': return mainWindow.isMaximized();
+      case 'is-maximized': return !!mainWindow.__fakeMax;
+      case 'get-position': {
+        const [wx, wy] = mainWindow.getPosition();
+        return { x: wx, y: wy };
+      }
+      case 'set-position': {
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          mainWindow.setPosition(Math.round(x), Math.round(y), false);
+        }
+        break;
+      }
     }
     return null;
   });
@@ -2831,6 +2891,7 @@ function applySettingsSectionGuard() {
     '\t\t\treturn;\n' +
     '\t\t}\n' +
     '\t\thooks.setSource(() => scope.get());';
+  const home = effectiveDshHome() || path.join(os.homedir(), '.dsh');
   const candidates = [
     path.join(__dirname, 'node_modules', '@deepseek-ai', 'dsh-settings', 'lib', 'index.js'),
     path.join(userDataDir, 'agent', 'node_modules', '@deepseek-ai', 'dsh-settings', 'lib', 'index.js'),
@@ -3548,10 +3609,9 @@ if (!gotLock) {
   app.quit();
 } else {
   app.setAppUserModelId('com.deepseek.dsh.desktop');
-  // GPU 进程崩溃是最常见的 Electron 静默退出原因（无日志、无弹窗）。
-  // 禁用硬件加速可规避大多数显卡驱动兼容性问题，对 DSH 这种文本为主
-  // 的应用无明显性能影响。若需排查，注释掉此行并观察崩溃日志。
-  app.disableHardwareAcceleration();
+  // 透明窗口 + 全窗 backdrop-filter 需要 GPU 才能丝滑；此处不再禁用硬件加速。
+  // 若出现 GPU 进程崩溃（日志会记录），可把下一行取消注释恢复旧行为。
+  // app.disableHardwareAcceleration();
   // GPU / 渲染进程崩溃日志：即使无法恢复，至少留下痕迹供排查。
   app.on('gpu-process-crashed', (_e, killed) => {
     const ts = new Date().toISOString();

@@ -3,6 +3,19 @@
 DeepSeek Harness（dsh）的 Windows 桌面客户端：内置独立 Node 运行时与 dsh CLI，
 一键启动 Web UI。
 
+## [1.0.0] — 2026-08-16
+
+### 里程碑
+- **Ethereal 魔改版 v1**：在 [myYangyunfan/dsh_desktop](https://github.com/myYangyunfan/dsh_desktop)（MIT）基础上重新编号发布，独立仓库维护，不再沿用 0.3.x 版本线。
+- **更新源切换**：客户端自更新从原仓库迁移到新仓库 `teresasousa585-max/dsh-desktop-v1`（Gitee 源暂缺，自动只走 GitHub）。
+- **文档清理**：README 中英文移除原仓库下载链接与 Gitee 分片说明，新增衍生声明。
+- 内置内容与功能保持不变：dsh 桌面壳、极简模式_win、余额/文件还原/终端/浮窗/识图、插件市场、超级注入器、微信桥接插件（openclaw-dsh-bridge）等。
+
+## [0.3.8] — 2026-08-15
+
+### 修复
+- **安装后启动即报 `ReferenceError: async is not defined`**：`main.js` 中 `async` 关键字与 `probeOverlayAgent` 函数声明被注释行拆开，导致主进程模块加载失败。已重接 `async function`；新增 `scripts/check-syntax.js` 并接入 `prepack` / `predist`，打包前强制做入口 JS 语法检查与「async/await 关键字与声明被拆开」模式扫描，此类坏包无法再打包。
+- **安装后启动即弹「应用初始化失败：home is not defined」**：`main.js` 的 `applySettingsSectionGuard()` 构造候选补丁路径时引用了未声明的 `home` 变量（相邻的 `applyProfilePatchGuard` / `applyWorkspaceSearchRailFix` 均有声明，唯独此处遗漏），`boot()` 无条件调用该函数导致每次启动必现初始化失败弹窗。已在该函数内补齐 `const home = effectiveDshHome() || path.join(os.homedir(), '.dsh')`，与相邻防护函数保持一致。
 
 ## [0.3.6] — 2026-08-15
 

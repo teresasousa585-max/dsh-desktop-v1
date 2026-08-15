@@ -4,46 +4,18 @@
 
 把 [@deepseek-ai/dsh](https://www.npmjs.com/package/@deepseek-ai/dsh)（DeepSeek Harness）封装为开箱即用的 Windows 桌面客户端。
 
+> **衍生声明**：本仓库是 [myYangyunfan/dsh_desktop](https://github.com/myYangyunfan/dsh_desktop) 的魔改衍生版，由 **Ethereal** 维护，版本重新编号为 v1。基于 MIT 协议，原项目与 DeepSeek、腾讯均无隶属关系。
+
 ---
 
 ## 下载安装
 
-### 国内用户（Gitee，分片下载）
-
-> Gitee 单文件限制 100 MB，安装包已拆分为 2 个分片，下载后合并即可。
-
-1. 下载以下文件，放到**同一个文件夹**：
-
-   **便携版**（免安装，双击即用，可放 U 盘）：
-   - [part1](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-0.3.3-portable-x64.exe.part1)（~95 MB）
-   - [part2](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-0.3.3-portable-x64.exe.part2)（~22 MB）
-
-   **安装版**（安装到系统，创建桌面/开始菜单快捷方式）：
-   - [part1](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-Setup-0.3.3-x64.exe.part1)（~95 MB）
-   - [part2](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/DSH-Desktop-Setup-0.3.3-x64.exe.part2)（~22 MB）
-
-2. 下载 [merge.bat](https://gitee.com/my-yang-yunfan/dsh_desktop/releases/download/v0.3.3/merge.bat)，放到同一文件夹，双击运行即可自动合并出 exe。
-
-   merge.bat 说明：脚本使用纯英文提示 + Windows 标准 CRLF 行尾，不依赖代码页切换；合并完成后窗口会停在 `pause` 等待按键，不会一闪而过。若出现 `[MISSING]` / `[FAILED]`，请确认分片下载完整后重试。
-
-   不想用 merge.bat？在 CMD 中手动合并：
-
-   ```cmd
-   :: 便携版
-   copy /b DSH-Desktop-0.3.3-portable-x64.exe.part1 + DSH-Desktop-0.3.3-portable-x64.exe.part2 DSH-Desktop-0.3.3-portable-x64.exe
-
-   :: 安装版
-   copy /b DSH-Desktop-Setup-0.3.3-x64.exe.part1 + DSH-Desktop-Setup-0.3.3-x64.exe.part2 DSH-Desktop-Setup-0.3.3-x64.exe
-   ```
-
-### 国际用户（GitHub，单文件下载）
-
-> GitHub 无单文件大小限制，可直接下载完整安装包。
+> 目前仅提供 GitHub 下载（Gitee 国内镜像暂未开通）。
 
 | 文件 | 说明 | 大小 |
 | --- | --- | --- |
-| [便携版 exe](https://github.com/myYangyunfan/dsh_desktop/releases/latest/download/DSH-Desktop-0.3.3-portable-x64.exe) | 免安装，双击即用 | ~126 MB |
-| [安装版 exe](https://github.com/myYangyunfan/dsh_desktop/releases/latest/download/DSH-Desktop-Setup-0.3.3-x64.exe) | 安装到系统，创建快捷方式 | ~126 MB |
+| [便携版 exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.0-portable-x64.exe) | 免安装，双击即用 | ~126 MB |
+| [安装版 exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.0-x64.exe) | 安装到系统，创建快捷方式 | ~126 MB |
 
 **首次使用**：双击运行后会显示启动动画，随后进入 DeepSeek Harness Web UI。如尚未配置 API Key，在界面内完成配置即可开始使用（与命令行 dsh 完全一致）。
 

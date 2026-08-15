@@ -1,4 +1,4 @@
-# DSH Desktop 排障手册（v0.3.4）
+# DSH Desktop 排障手册（v1.0.0）
 
 > 面向客户与技术支持。所有路径以实际机器为准：安装版数据目录为
 > `%APPDATA%\DSH Desktop\`，日志位于 `%APPDATA%\DSH Desktop\logs\`。
