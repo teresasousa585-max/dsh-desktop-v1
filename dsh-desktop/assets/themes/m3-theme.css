@@ -920,18 +920,6 @@ body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-btn:hover {
   background: var(--dsw-alias-interactive-bg-hover) !important;
 }
 
-/* Sponsor dialog */
-body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-sponsor-card {
-  border-radius: var(--m3-shape-xl) !important;
-  background: var(--dsw-alias-bg-layer-2) !important;
-  border: 1px solid var(--dsw-alias-border-l1) !important;
-  box-shadow: var(--m3-shadow-5) !important;
-}
-
-body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-sponsor-code img {
-  border-radius: var(--m3-shape-md) !important;
-}
-
 /* Badge */
 body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-badge {
   border-radius: var(--m3-shape-full) !important;

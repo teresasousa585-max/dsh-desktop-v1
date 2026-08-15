@@ -4,12 +4,11 @@
 // dsh agent 更新互相独立）。
 //
 // 流程：
-//   1. checkLatest(): 依次查询上游发布源（GitHub Releases → Gitee Releases，
-//      可用环境变量 DSH_DESKTOP_RELEASE_API 指向自定义镜像 API），取 latest
+//   1. checkLatest(): 查询上游 GitHub Release（可用环境变量
+//      DSH_DESKTOP_RELEASE_API 指向自定义镜像 API），取 latest
 //      release 的 tag 作为版本号，与当前 APP_VERSION 比较。
 //   2. selectAsset(): 按当前部署形态选择安装包 —— 便携版选
-//      *-portable-x64.exe；安装版选 Setup-*-x64.exe。Gitee 因单文件 100MB
-//      限制把安装包拆成 .part1/.part2 分片，此时自动按序下载并拼接。
+//      *-portable-x64.exe；安装版选 Setup-*-x64.exe。
 //   3. downloadRelease(): 流式下载（带进度回调）到 <userData>/updates/。
 //   4. applyUpdate(): 写一个纯 ASCII 的 cmd 脚本并以 detached 方式启动，随后
 //      主进程退出：
@@ -134,9 +133,7 @@ async function checkLatest(ctx, currentVersion) {
   if (candidates.length === 0) {
     throw new Error('无法连接上游发布源（' + errors.join('；') + '）');
   }
-  // 双源回退的语义是「取版本最高的可用源」，而不是先返回第一个可用源。
-  // 否则 GitHub 的 latest 落后于 Gitee 时，用户会一直被误判为“已是最新”，
-  // 表现为内置更新失效、只能手动下载安装包覆盖。
+  // 多发布源回退的语义是「取版本最高的可用源」，而不是先返回第一个可用源。
   candidates.sort((a, b) => compareVersions(b.version, a.version));
   const best = candidates[0];
   ctx.log('client-update', `选用最高版本源 [${best.source}] ${best.version}（候选: ${candidates.map((c) => `${c.source}@${c.version}`).join(', ')}）`);
@@ -150,7 +147,7 @@ function selectAsset(release) {
   const direct = release.assets.find((a) => wanted.test(a.name));
   if (direct) return { parts: [direct], name: direct.name, totalSize: direct.size };
 
-  // Gitee 单文件 100MB 限制：安装包拆分为 <file>.part1 / <file>.part2 …
+  // 兼容镜像源把安装包拆分为 <file>.part1 / <file>.part2 … 的分片发布。
   const base = isPortable()
     ? `DSH-Desktop-${release.version}-portable-x64.exe`
     : `DSH-Desktop-Setup-${release.version}-x64.exe`;

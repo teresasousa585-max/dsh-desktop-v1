@@ -64,10 +64,6 @@ const dshDesktop = {
   openExternal: (url) => ipcRenderer.invoke('dsh:open-external', { url }),
   // 复制文本到剪贴板（更新源地址等）。
   copyText: (text) => ipcRenderer.invoke('dsh:copy-text', { text }),
-  // 赞助二维码：读取支付宝/微信收款码（data URI）。
-  sponsorQr: () => ipcRenderer.invoke('dsh:sponsor-qr'),
-  // 赞助小窗：打开独立「请作者喝咖啡」窗口（主进程单例）。
-  sponsorWindow: () => ipcRenderer.invoke('chrome:sponsor-window'),
   // 会话浮窗（分屏）：主窗请求把某个会话弹出到独立窗口；浮窗关闭自身。
   floatWindow: {
     open: (sessionId) => ipcRenderer.invoke('chrome:float-window', { action: 'open', sessionId }),
@@ -344,10 +340,6 @@ function renderMenu() {
         <span class="dch-repo-url" title="${esc(state.repoUrls ? state.repoUrls.github : '')}">${esc(state.repoUrls ? state.repoUrls.github : '')}</span>
         <button class="dch-copy" data-copy="github" title="复制地址">复制</button>
       </div>
-      <div class="dch-repo-row">
-        <span class="dch-repo-url" title="${esc(state.repoUrls ? state.repoUrls.gitee : '')}">${esc(state.repoUrls ? state.repoUrls.gitee : '')}</span>
-        <button class="dch-copy" data-copy="gitee" title="复制地址">复制</button>
-      </div>
     </div>
     <button class="dch-item" data-act="toggle-notify"><span>会话完成通知</span>${state.notifyOnTurnEnd ? '<span class="dch-check">✓</span>' : ''}</button>
     <button class="dch-item" data-act="toggle-close-to-tray"><span>关闭时最小化到托盘</span>${state.closeToTray ? '<span class="dch-check">✓</span>' : ''}</button>
@@ -359,8 +351,6 @@ function renderMenu() {
     <div class="dch-sep"></div>
     <button class="dch-item" data-act="open-browser">在浏览器中打开</button>
     <button class="dch-item" data-act="open-logs">打开日志目录</button>
-    <div class="dch-sep"></div>
-    <button class="dch-item" data-act="sponsor">☕ 请作者喝咖啡</button>
     <div class="dch-sep"></div>
     <button class="dch-item" data-act="about">关于 DSH Desktop</button>
     <button class="dch-item" data-danger="1" data-act="quit">退出</button>`;
@@ -374,7 +364,6 @@ function renderMenu() {
         return;
       }
       closeMenu();
-      if (act === 'sponsor') { dshDesktop.sponsorWindow(); return; }
       dshDesktop.menu.action(act);
     });
   });
@@ -383,7 +372,7 @@ function renderMenu() {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const kind = btn.dataset.copy;
-      const url = state.repoUrls && (kind === 'github' ? state.repoUrls.github : state.repoUrls.gitee);
+      const url = state.repoUrls && kind === 'github' ? state.repoUrls.github : '';
       if (!url) return;
       const r = await dshDesktop.copyText(url);
       if (r && r.ok) {

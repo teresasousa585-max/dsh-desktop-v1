@@ -10,12 +10,12 @@
 
 ## 下载安装
 
-> 目前仅提供 GitHub 下载（Gitee 国内镜像暂未开通）。
+> 仅提供 GitHub 下载。
 
 | 文件 | 说明 | 大小 |
 | --- | --- | --- |
-| [便携版 exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.0-portable-x64.exe) | 免安装，双击即用 | ~126 MB |
-| [安装版 exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.0-x64.exe) | 安装到系统，创建快捷方式 | ~126 MB |
+| [便携版 exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.1-portable-x64.exe) | 免安装，双击即用 | ~126 MB |
+| [安装版 exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.1-x64.exe) | 安装到系统，创建快捷方式 | ~126 MB |
 
 **首次使用**：双击运行后会显示启动动画，随后进入 DeepSeek Harness Web UI。如尚未配置 API Key，在界面内完成配置即可开始使用（与命令行 dsh 完全一致）。
 
@@ -31,7 +31,7 @@
 - **退出即清理**：退出应用自动结束 dsh 进程树，不留孤儿进程
 - **便携版**：数据跟随 exe 所在目录，拷到 U 盘就能用
 - **与 CLI 共享配置**：默认沿用 `DSH_HOME`（通常是 `~\.dsh`），已有会话/API Key 直接生效
-- **双重自动更新**：官方 dsh agent 更新（npm overlay）+ 客户端封装自更新（GitHub/Gitee 双源、分片自动合并、原地替换重启），均经用户同意
+- **双重自动更新**：官方 dsh agent 更新（npm overlay）+ 客户端封装自更新（GitHub Release，原地替换重启），均经用户同意
 - **插件升级兼容**：更新只升级内置配套插件（余额、终端、独立窗口等），**不会覆盖你自行添加的第三方插件**，`cordis.patch.yml` 里你自己加的条目原样保留
 - **快捷方式自动维护**：便携版自动创建/修复桌面与开始菜单快捷方式
 - **DeepSeek 余额小部件**：对话底部统计栏显示「本轮 ¥X · 余额 ¥Y」，点击跳转充值

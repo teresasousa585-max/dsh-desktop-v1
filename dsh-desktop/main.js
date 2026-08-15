@@ -117,7 +117,6 @@ let epermRepairAttempted = false; // EPERM/symlink 自愈每次运行只尝试�
 const FLOAT_MAX = 8; // 浮窗总数上限，防资源滥用
 const floatWindows = new Set(); // BrowserWindow 集合
 const floatBySession = new Map(); // sessionId -> BrowserWindow（同一会话只允许一个浮窗）
-let sponsorWindow = null; // 「请作者喝咖啡」独立小窗（单例）
 
 // ---------------------------------------------------------------------------
 // Small helpers
@@ -1244,8 +1243,6 @@ function createWindow(opts = {}) {
     // 崩溃恢复会销毁并重建主窗：旧窗口的 closed 可能晚于新窗口创建，
     // 必须校验身份，避免把新的 mainWindow 全局引用置空。
     if (mainWindow === win) mainWindow = null;
-    if (sponsorWindow && !sponsorWindow.isDestroyed()) sponsorWindow.destroy();
-    sponsorWindow = null;
   });
 }
 
@@ -1431,114 +1428,6 @@ function closeAllFloatWindows() {
   }
   floatWindows.clear();
   floatBySession.clear();
-  if (sponsorWindow && !sponsorWindow.isDestroyed()) sponsorWindow.destroy();
-  sponsorWindow = null;
-}
-
-// ---------------------------------------------------------------------------
-// 赞助小窗：独立「请作者喝咖啡」收款码窗口
-// ---------------------------------------------------------------------------
-
-// 读取支付宝 / 微信收款码图片，返回 data URI（供 IPC 与小窗复用）。
-function readSponsorQr() {
-  const read = (name) => {
-    try {
-      const buf = fs.readFileSync(path.join(__dirname, 'assets', 'sponsor', name));
-      const mime = name.endsWith('.png') ? 'image/png' : 'image/jpeg';
-      return 'data:' + mime + ';base64,' + buf.toString('base64');
-    } catch { return ''; }
-  };
-  return { ok: true, alipay: read('sponsor-alipay.jpg'), wechat: read('sponsor-wechat.png') };
-}
-
-// 创建（或聚焦已有）赞助小窗。窗口为原生边框小窗，内嵌深色 HTML 展示两码。
-function createSponsorWindow() {
-  if (sponsorWindow && !sponsorWindow.isDestroyed()) {
-    sponsorWindow.show();
-    sponsorWindow.focus();
-    return sponsorWindow;
-  }
-  const qr = readSponsorQr();
-  const html = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#0b1220;color:#e6ecff;font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
-    display:flex;flex-direction:column;height:100vh;user-select:none}
-  .head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;
-    border-bottom:1px solid rgba(255,255,255,.08)}
-  .title{font-size:14px;font-weight:600}
-  .close{width:26px;height:26px;display:grid;place-items:center;border:none;border-radius:8px;
-    background:transparent;color:#a9b8de;cursor:pointer;font-size:16px;line-height:1}
-  .close:hover{background:rgba(255,255,255,.1);color:#eef2ff}
-  .sub{font-size:12px;color:#8b9ac4;line-height:18px;padding:10px 14px 0}
-  .codes{flex:1;display:flex;gap:16px;justify-content:center;align-items:center;padding:8px 14px 16px}
-  .code{flex:1;min-width:0;text-align:center}
-  .code img{width:100%;max-width:150px;aspect-ratio:1/1;object-fit:contain;display:block;margin:0 auto;
-    border-radius:10px;background:#fff;padding:8px;box-sizing:border-box}
-  .code p{margin:8px 0 0;font-size:12px;color:#a9b8de}
-  .empty{font-size:12px;color:#8b9ac4;text-align:center;padding:16px 0}
-</style>
-</head>
-<body>
-  <div class="head">
-    <div class="title">☕ 请作者喝咖啡</div>
-    <button class="close" title="关闭" aria-label="关闭" onclick="window.close()">×</button>
-  </div>
-  <div class="sub">如果这个桌面客户端帮到了你，欢迎扫一扫支持一下作者，谢谢你的鼓励～</div>
-  <div class="codes" id="codes"></div>
-  <script>
-    var codes = [
-      { name: '支付宝', src: \`${qr.alipay}\` },
-      { name: '微信', src: \`${qr.wechat}\` },
-    ].filter(function (c) { return c.src; });
-    var box = document.getElementById('codes');
-    if (!codes.length) {
-      box.className = 'empty';
-      box.textContent = '未找到收款码资源';
-    } else {
-      box.className = 'codes';
-      box.innerHTML = codes.map(function (c) {
-        return '<div class="code"><img alt="' + c.name + '收款码" src="' + c.src + '"><p>' + c.name + '</p></div>';
-      }).join('');
-    }
-  </script>
-</body>
-</html>`;
-  const win = new BrowserWindow({
-    width: 360,
-    height: 420,
-    resizable: false,
-    minimizable: false,
-    maximizable: false,
-    fullscreenable: false,
-    show: false,
-    title: '请作者喝咖啡',
-    backgroundColor: '#0b1220',
-    icon: path.join(__dirname, 'assets', 'icon.png'),
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      spellcheck: false,
-    },
-  });
-  sponsorWindow = win;
-  win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html))
-    .catch((err) => log('sponsor', '赞助小窗加载失败: ' + ((err && err.message) || err)));
-  win.once('ready-to-show', () => { if (!win.isDestroyed()) win.show(); });
-  win.on('closed', () => { if (sponsorWindow === win) sponsorWindow = null; });
-  // Esc 关闭小窗。
-  win.webContents.on('before-input-event', (event, input) => {
-    if (input.type === 'keyDown' && input.key === 'Escape') {
-      event.preventDefault();
-      if (!win.isDestroyed()) win.close();
-    }
-  });
-  log('sponsor', '已打开赞助小窗');
-  return win;
 }
 
 function fatal(title, err) {
@@ -1986,19 +1875,6 @@ function registerChromeIpc() {
     if (!mainWindow || event.sender !== mainWindow.webContents) return { ok: false };
     if (typeof text !== 'string' || !text || text.length > 2048) return { ok: false };
     clipboard.writeText(text);
-    return { ok: true };
-  });
-
-  // 请作者喝咖啡：读取赞助二维码图片（支付宝 / 微信），以 data URI 返回给渲染进程。
-  ipcMain.handle('dsh:sponsor-qr', (event) => {
-    if (!mainWindow || event.sender !== mainWindow.webContents) return { ok: false };
-    return readSponsorQr();
-  });
-
-  // 赞助小窗：打开独立「请作者喝咖啡」窗口（校验来源是主窗）。
-  ipcMain.handle('chrome:sponsor-window', (event) => {
-    if (!mainWindow || event.sender !== mainWindow.webContents) return { ok: false, error: 'unauthorized' };
-    createSponsorWindow();
     return { ok: true };
   });
 

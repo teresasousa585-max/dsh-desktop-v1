@@ -670,13 +670,6 @@ body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-item {
 body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-item:hover {
   background: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
 }
-
-/* 赞助弹窗 M3 化 */
-body[data-m3-theme="m3"] #__dsh_desktop_chrome__ .dch-sponsor-card {
-  background: var(--m3-surface-container-high);
-  border: 1px solid var(--m3-outline-variant);
-  border-radius: var(--m3-shape-xl);
-}
 `;
 }
 

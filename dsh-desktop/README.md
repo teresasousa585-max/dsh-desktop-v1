@@ -11,7 +11,7 @@
 - ✅ **便携版**：`portable` 版数据（日志、配置）跟随 exe 所在目录，拷到 U 盘就能用
 - ✅ **与 CLI 共享配置**：默认沿用 dsh 自身的 `DSH_HOME`（通常是 `~\.dsh`），已有会话/API Key 直接生效
 - ✅ **跟随官方更新**：官方 @deepseek-ai/dsh 发新版时弹窗提醒，经用户同意后自动下载安装，重启生效，失败自动保留旧版
-- ✅ **客户端自更新**：自动检查上游仓库（GitHub→Gitee 双源，Gitee 分片自动合并）发布的 DSH Desktop 新版本，经用户同意后下载、替换、重启；便携版/安装版各自适配
+- ✅ **客户端自更新**：自动检查上游 GitHub Release 发布的 DSH Desktop 新版本，经用户同意后下载、替换、重启；便携版/安装版各自适配
 - ✅ **快捷方式自动维护**：便携版首次运行自动创建开始菜单 + 桌面快捷方式；exe 移动后自动重建（修复"快捷方式指向的文件消失"）；从临时目录运行时给出提示
 - ✅ **DeepSeek 余额小部件**：对话底部统计栏内联显示「本轮 ¥X.XX · 余额 ¥Y.YY」（自动注入配套 dsh 客户端插件，点击跳转充值）
 - ✅ **文件更改追踪 + 一键还原**：详情面板新增「文件」标签页，聚合本会话 agent 修改过的全部文件（新建/修改/删除、行级 diff、逐文件或全部还原）；数据只读复用会话日志已持久化的 `tool/result.meta.diffs`，还原由桌面壳做内容精确匹配后替换，失败安全提示
@@ -45,11 +45,11 @@
 
 ## 客户端自更新（封装层）
 
-- 启动 60 秒后及此后每 12 小时，自动查询上游仓库的最新 release（**GitHub Releases → Gitee Releases 双源回退**；可用环境变量 `DSH_DESKTOP_RELEASE_API` 指向自定义镜像 API），比较当前版本。
-- 发现新版本时弹窗询问：**立即更新 / 跳过此版本 / 稍后**；同意后带进度条下载安装包（便携版选 `*-portable-x64.exe`，安装版选 `Setup-*-x64.exe`；Gitee 因单文件 100MB 限制拆分的 `.part1/.part2` 分片会自动按序下载并合并），下载到 `<数据目录>\updates\`。
+- 启动 60 秒后及此后每 12 小时，自动查询上游 GitHub Release 的最新版本（可用环境变量 `DSH_DESKTOP_RELEASE_API` 指向自定义镜像 API），比较当前版本。
+- 发现新版本时弹窗询问：**立即更新 / 跳过此版本 / 稍后**；同意后带进度条下载安装包（便携版选 `*-portable-x64.exe`，安装版选 `Setup-*-x64.exe`），下载到 `<数据目录>\updates\`。
 - 确认重启后：**便携版**用 detached 脚本等待旧 exe 解锁 → 备份 → 原地替换 → 自动启动新版本（只读目录自动退化为直接启动新 exe）；**安装版**等待进程退出后以向导方式启动新安装包，安装完成后如果新版没有自动运行，脚本会从卸载注册表定位并显式启动新版本。启动更新脚本时会清除待安装标记，更新失败不会在下次启动反复弹同一个更新框。
 - 菜单入口：chrome 栏 ⋯ 菜单 →「检查客户端更新…」；托盘菜单同样可用。跳过版本记录在 `settings.json`（`skipClientVersion`）。
-- **更新源可见可复制**：⋯ 菜单内「更新源」区块与「关于 DSH Desktop」对话框展示两个项目仓库地址（GitHub / Gitee），一键复制到剪贴板。
+- **更新源可见可复制**：⋯ 菜单内「更新源」区块与「关于 DSH Desktop」对话框展示项目 GitHub 仓库地址，一键复制到剪贴板。
 - 链路自检：`node scripts/check-client-latest.js [--download]`（可设 `DSH_DESKTOP_RELEASE_API` / `PORTABLE_EXECUTABLE_DIR`）。
 
 ## DeepSeek 余额小部件
@@ -167,14 +167,6 @@
 - 菜单「帮助 → 会话完成通知」可随时开关（持久化于数据目录 `settings.json`）。
 - Windows Toast 需要开始菜单快捷方式：安装版由安装器创建；便携版首次运行自动创建（指向原始 exe）。
 
-## 支持作者（请作者喝咖啡）
-
-如果这个桌面客户端帮到了你，欢迎扫码支持一下作者 ☕。入口在窗口左上角 ⋯ 菜单 →「请作者喝咖啡」。
-
-| 支付宝 | 微信 |
-| --- | --- |
-| ![支付宝收款码](assets/sponsor/sponsor-alipay.jpg) | ![微信收款码](assets/sponsor/sponsor-wechat.png) |
-
 ## 开发
 
 要求：Windows + Node.js（仅构建机需要）+ npm。
@@ -270,7 +262,7 @@ node dsh-desktop/scripts/sync-companion-plugins.js ~/.dsh --with-patches
 - **历史会话打不开（`SessionFormatUnsupportedError: ... unknown to this harness and not marked ignorable`）**：dsh-agent-teams / dsh-message-edit / dsh-web-search-exa 等插件写入的自定义会话事件不在内置核心的事件词汇表内导致。v0.3.3 起打包时已自动修补内置 `@deepseek-ai/dsh-session`；旧版本无需重装，一条命令修复：`npx dsh-session-history-fix`（幂等，可重复运行；改完重启应用即可）。
 - **无法打开文件夹（`directory picker failed: ... win32 folder dialog worker exited...`）**：v0.3.4 已根治（koffi@3.1.5 + 启动预检自动降级 browse 选择器）。旧版本请升级到 0.3.4。
 - **启动失败（`dsh web 启动失败（退出码 1）`）**：v0.3.4 会自动进入安全模式或自愈并重试，弹窗内直接显示最近日志。日志出现 `plugin tree failed to load` = 插件配置不兼容（自动禁用问题插件）；出现 `EPERM ... symlink` = 目录联接被拒（自动备份重建）；日志戛然而止且退出码 `3221225477`（0xC0000005）= koffi 原生崩溃（0.3.4 已换修复版）。
-- **安装后启动即弹「应用初始化失败：home is not defined」**：v0.3.8 已修复（启动路径上的 settings 注册防护函数 `applySettingsSectionGuard` 缺少 `home` 变量声明，启动必现崩溃）。请升级到 v0.3.8，或从 GitHub / Gitee release 下载最新安装包。
+- **安装后启动即弹「应用初始化失败：home is not defined」**：v0.3.8 已修复（启动路径上的 settings 注册防护函数 `applySettingsSectionGuard` 缺少 `home` 变量声明，启动必现崩溃）。请升级到最新版，或从 GitHub Release 下载最新安装包。
 - **设置页看不到插件设置（识图插件 / 自定义提示词 / 思考强度 / 插件市场）**：v0.3.4 已修复 agent 更新后白名单丢失的问题；仍不可见时重启应用一次，必要时查看 `desktop.log` 中「提示词暴露补丁」记录。
 - **客户端更新点了「立即重启」后仍提示有待安装的更新**：v0.3.4 起会识别「客户端更新未完成」并提供重试安装 / 打开更新日志；若反复出现，把 `%APPDATA%\DSH Desktop\updates\apply-update.log` 发给技术支持。
 - **如何手动安装第三方插件**：推荐在设置页「插件市场」（Zat-DSH Engine）搜索并安装（支持 npm 包名、`github:owner/repo#分支` 与镜像源）；安装完成后按提示重启服务。如果本机另装了 dsh CLI，也可以执行 `dsh plugin --profile web add <包名或 github 源>`，效果相同。
@@ -282,13 +274,12 @@ node dsh-desktop/scripts/sync-companion-plugins.js ~/.dsh --with-patches
 dsh-desktop/
 ├── main.js               # Electron 主进程（无边框窗口/托盘/自绘 chrome IPC + 余额推送 + 客户端自更新 + 快捷方式维护）
 ├── updater.js            # dsh agent 官方更新引擎（检查 / 同意后安装 / 回退）
-├── client-updater.js     # 客户端（封装层）自更新引擎（GitHub/Gitee 双源 + 分片合并 + 原地替换）
+├── client-updater.js     # 客户端（封装层）自更新引擎（GitHub Release + 原地替换）
 ├── balance.js            # DeepSeek 账户余额查询（主进程）
 ├── session-watcher.js    # 会话完成监听（zstd 多帧解码 + turn/end 检测）
 ├── preload.js            # 沙箱预加载（自绘玻璃标题栏 + 窗口控制/菜单 IPC + 余额事件桥 + WSL 配置桥）
 ├── wsl-backend.js        # WSL 托管后端（发行版探测 / bootstrap 安装 / 启动停止 / 更新回退）
 ├── assets/               # 加载页、更新进度页、恢复页、图标、托盘图标、配套 dsh 插件
-│   ├── sponsor/          # 赞助收款码（支付宝 / 微信，「请作者喝咖啡」面板与本文档共用）
 │   ├── agent-presets/    # 8 个内置预设（minimal-win / router-standard / anchored-standard / zero-anchored-standard / whoami-standard / v4-flash-godmode-opencode-go / warmupbetter / warmupbetter-replay）
 │   └── plugins/          # dsh-balance / dsh-file-changes / dsh-vision / zat-dsh-engine / dsh-better-sidebar / harness-pet / dsh-super-injector / dsh-wsl-settings（设置页「WSL 后端」栏）等，启动时自动同步进 web profile
 ├── scripts/

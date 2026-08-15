@@ -10,12 +10,12 @@ A ready-to-use Windows desktop client wrapping [@deepseek-ai/dsh](https://www.np
 
 ## Download & Install
 
-> GitHub only for now (Gitee China mirror not yet available).
+> GitHub only.
 
 | File | Description | Size |
 | --- | --- | --- |
-| [Portable exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.0-portable-x64.exe) | No install needed, double-click to run | ~126 MB |
-| [Setup exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.0-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
+| [Portable exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.1-portable-x64.exe) | No install needed, double-click to run | ~126 MB |
+| [Setup exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.1-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
 
 **First run**: A loading animation appears briefly, then the DeepSeek Harness Web UI loads. If you haven't configured an API Key yet, set it up in the UI to get started (same as the `dsh` CLI).
 
@@ -31,7 +31,7 @@ A ready-to-use Windows desktop client wrapping [@deepseek-ai/dsh](https://www.np
 - **Clean exit**: Quitting kills the entire dsh process tree — no orphan processes
 - **Portable**: Data follows the exe, copy it to a USB stick and go
 - **Shares CLI config**: Defaults to `DSH_HOME` (typically `~\.dsh`), so existing sessions/API keys work out of the box
-- **Dual auto-update**: official dsh agent updates (npm overlay) + client-wrapper self-update (GitHub→Gitee fallback, split-part auto-merge, in-place replace & restart), both user-consented
+- **Dual auto-update**: official dsh agent updates (npm overlay) + client-wrapper self-update (GitHub Releases, in-place replace & restart), both user-consented
 - **Shortcut self-healing**: the portable build creates/repairs desktop & Start Menu shortcuts automatically
 - **DeepSeek balance widget**: inline「this turn ¥X · balance ¥Y」in the conversation stats bar, click to top up
 - **Session notifications**: Windows system notification when an agent task completes — click to bring the window back

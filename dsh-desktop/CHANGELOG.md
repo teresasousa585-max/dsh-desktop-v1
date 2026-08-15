@@ -3,6 +3,13 @@
 DeepSeek Harness（dsh）的 Windows 桌面客户端：内置独立 Node 运行时与 dsh CLI，
 一键启动 Web UI。
 
+## [1.0.1] — 2026-08-16
+
+### 变更
+- **移除「请作者喝咖啡」功能**：删除 ⋯ 菜单入口、赞助小窗、收款码读取 IPC 及 `assets/sponsor/` 二维码资源，应用内不再出现任何打赏/收款入口。
+- **更新源统一为单个 GitHub 链接**：⋯ 菜单「更新源」与「关于」对话框只展示新仓库 `https://github.com/teresasousa585-max/dsh-desktop-v1`，移除 Gitee 显示行。
+- **文档清理**：README（根/英文/内层）与客户端自更新注释移除 Gitee 双源、分片合并等旧描述，统一为 GitHub Release 单源。
+
 ## [1.0.0] — 2026-08-16
 
 ### 里程碑
