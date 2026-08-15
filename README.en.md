@@ -1,107 +1,81 @@
-[中文](README.md) | [English](README.en.md)
+# DSH Desktop · Ethereal Edition
 
-# DSH Desktop
-
-A ready-to-use Windows desktop client wrapping [@deepseek-ai/dsh](https://www.npmjs.com/package/@deepseek-ai/dsh) (DeepSeek Harness).
-
-> **Fork notice**: This repository is a modified fork of [myYangyunfan/dsh_desktop](https://github.com/myYangyunfan/dsh_desktop), maintained by **Ethereal**, re-versioned as v1. Licensed under MIT. Neither the original project nor this fork is affiliated with DeepSeek or Tencent.
+> A Windows-native workstation for DeepSeek Harness.
+> Double-click to run. No Node install. No terminal required.
 
 ---
 
-## Download & Install
+## What it is
 
-> GitHub only.
+DSH Desktop is a desktop shell for DeepSeek Harness (dsh), customized by **Ethereal**.
+It turns the agent workbench — normally started from a terminal — into a real desktop app: native windows, system tray, self-updates.
 
-| File | Description | Size |
-| --- | --- | --- |
-| [Setup exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.2-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
+**One-line difference from the official web version**: they give you a webpage; this gives you a program.
 
-**First run**: A loading animation appears briefly, then the DeepSeek Harness Web UI loads. If you haven't configured an API Key yet, set it up in the UI to get started (same as the `dsh` CLI).
+---
 
-> Portable data lives next to the exe in `data\`; the installer uses `%APPDATA%\DSH Desktop\`.
-> To override the DSH config directory, set the `DSH_HOME` environment variable before launch.
+## Highlights
 
-## Features
+| Capability | Notes |
+| --- | --- |
+| Zero-dependency launch | Bundled Node runtime + full dsh stack, works offline |
+| Native window | Frameless glass bar, tray icon, close-to-tray |
+| Session management | Parallel sessions, file-change tracking, one-click revert |
+| Vision | Text-only models can still read images (any OpenAI-compatible VLM) |
+| Plugin ecosystem | Built-in plugin marketplace + runtime injector, no restarts |
+| WeChat remote | Drive the agent from WeChat via the official ClawBot channel |
+| Auto-update | Agent and client updates with automatic rollback |
+| Minimal preset | Windows-friendly preset: PowerShell instead of bash |
 
-- **No Node.js needed**: Bundles a standalone Node runtime and npm CLI — target machine needs nothing extra
-- **Bundled dsh CLI**: Full `@deepseek-ai/dsh` package with all plugins, works offline
-- **One-click launch**: Double-click to start `dsh web`, reuses the last saved port when possible (falls back to a free port if occupied) so UI preferences such as the session grouping mode persist across restarts
-- **Frameless styled window + system tray**: No native title/menu bar — a custom glass bar (rounded icon, ⋯ menu, window controls) with Win11 rounded corners; closing hides to the tray
-- **Clean exit**: Quitting kills the entire dsh process tree — no orphan processes
-- **Portable**: Data follows the exe, copy it to a USB stick and go
-- **Shares CLI config**: Defaults to `DSH_HOME` (typically `~\.dsh`), so existing sessions/API keys work out of the box
-- **Dual auto-update**: official dsh agent updates (npm overlay) + client-wrapper self-update (GitHub Releases, in-place replace & restart), both user-consented
-- **Shortcut self-healing**: the portable build creates/repairs desktop & Start Menu shortcuts automatically
-- **DeepSeek balance widget**: inline「this turn ¥X · balance ¥Y」in the conversation stats bar, click to top up
-- **Session notifications**: Windows system notification when an agent task completes — click to bring the window back
+---
 
-- **Quiet conversation output**: Settings → General → "Hide conversation output" keeps tool calls, file operations, results, turn summaries and the final summary while hiding long process text
-- **Conversation navigation rail**: a faint right-edge rail tracks session length; hovering shows a vertical tick at the cursor as a preview, only clicking jumps
-- **Portable extraction cache**: first launch caches to `%TEMP%\dsh-desktop-portable`, subsequent launches start instantly instead of re-extracting 132MB / 24k files every time
-- **Startup self-heal & watchdog**: automatically repairs broken profile symlinks that cause `dsh web` exit code 1, and relaunches the app if the main process dies unexpectedly
-- **Vision plugin (dsh-vision)**: configure an OpenAI-compatible VLM base URL, API key and model in Settings; the model can then call `view_image` (default: free Zhipu `glm-4.6v-flash`)
-- **Renderer crash recovery**: automatically reloads the Web UI after a renderer crash, rebuilds the BrowserWindow when reload fails, and shows a local error page with reload/restart actions after repeated failures
-- **Session history compatibility**: the bundled `@deepseek-ai/dsh-session` event vocabulary is patched during packaging, so events from dsh-agent-teams / dsh-message-edit / dsh-web-search-exa no longer break history loading
-- **Built-in minimal_win preset**: an official-minimal-style agent preset using PowerShell (`pwsh` + `str_replace_editor`)
-- **Built-in dsh-routing-suite**: `dsh-super-injector` (dev_* plugin injection/reload/self-heal tools) + `router-standard` preset
-- **Built-in dsh-anchored-standard**: `anchored-standard` and `zero-anchored-standard` experimental presets
+## Install
 
-- **Balance dock toggle**: hide the balance/this-turn dock from the chrome menu, useful for third-party relay users
-- **Third-party reasoning effort is opt-in**: `reasoning_effort` injection is off by default to avoid breaking strict third-party APIs such as Bailian; enable it only for providers that support the field
-- **Self-update restart hardening**: setup updates relaunch the new version after install, and stale pending-update prompts are cleared when the update script starts
+Only the **installer build** (NSIS) is published:
 
-## Requirements
+| Channel | Download |
+| --- | --- |
+| GitHub Release | [DSH-Desktop-Setup-1.0.2-x64.exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.2-x64.exe) |
 
-- Windows 10/11 (x64)
-- No pre-installed Node.js or any other runtime
+- Data directory: `%APPDATA%\DSH Desktop\`
+- Override config location: set `DSH_HOME` before launching
+
+---
+
+## Quick start
+
+1. Install and launch, wait for the Web UI.
+2. Add a DeepSeek API Key in settings (or reuse `~/.dsh/.credentials.yaml`).
+3. New sessions use the "minimal grayscale" preset: PowerShell, slim tools, sidebar collapsed.
+4. For image understanding: Settings → Vision, fill baseURL / key / model (default free `glm-4.6v-flash`).
+5. For WeChat control: Settings → ClawBot, scan to bind, then send tasks from WeChat.
+
+---
 
 ## Build from source
 
 ```powershell
 cd dsh-desktop
 npm install
-npm run fetch-runtime    # bundle node.exe + npm CLI
-npm run dist             # build portable + NSIS installer -> dist/
+npm run fetch-runtime   # download bundled node + npm
+npm run dist            # produces dist\DSH-Desktop-Setup-<version>-x64.exe
 ```
 
-> Behind a firewall? Electron mirror: `$env:ELECTRON_MIRROR='https://npmirror.com/mirrors/electron/'`; builder toolchain mirror: `$env:ELECTRON_BUILDER_BINARIES_MIRROR='https://npmirror.com/mirrors/electron-builder-binaries/'`.
+> Installer-only by default; tweak `electron-builder.yml` for a portable build.
 
-## Architecture
+---
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  Electron shell (main.js)                                │
-│  · Single-instance lock / window / menu / lifecycle      │
-│  · Session watcher (session-watcher.js) → notifications  │
-│  · Auto-updater (updater.js) → user-consented overlay    │
-│  · spawn node.exe from vendor|resources                  │
-└──────────────┬───────────────────────────────────────────┘
-               │  dsh web --host 127.0.0.1 --port <last saved port>
-               ▼
-       Bundled node.exe + @deepseek-ai/dsh
-       Path resolution: user overlay > bundled package
-       Prints "dsh web: http://127.0.0.1:<port>"
-               │  Parse URL, poll HTTP 200
-               ▼
-       Native window loads Web UI (localhost only)
-```
+## Repository layout
 
-## Project structure
+| Path | Contents |
+| --- | --- |
+| `dsh-desktop/` | Electron shell, build scripts, bundled companion plugins |
+| `openclaw-dsh-bridge/` | WeChat ClawBot → DSH bridge plugin |
 
-```
-dsh-desktop/
-├── main.js               # Electron main process
-├── updater.js            # Auto-update engine
-├── session-watcher.js    # Session completion watcher
-├── preload.js            # Sandbox preload
-├── assets/               # Loading page, update progress page, icons
-├── scripts/              # Build & dev helper scripts
-├── build/icon.png        # electron-builder icon
-├── vendor/               # Bundled node.exe / npm CLI (not in repo)
-├── electron-builder.yml  # Build config
-└── dist/                 # Build output (not in repo)
-```
+---
 
 ## License
 
-MIT. Based on [@deepseek-ai/dsh](https://www.npmjs.com/package/@deepseek-ai/dsh) (MIT).
+- MIT License
+- Maintainer: Ethereal
+- Bundled third-party plugins are MIT; details in `dsh-desktop/docs/attributions.md`
