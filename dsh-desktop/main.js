@@ -1670,24 +1670,20 @@ function repoUrls() {
   const repos = clientUpdater.resolveRepos();
   return {
     github: 'https://github.com/' + repos.github,
-    gitee: repos.gitee ? 'https://gitee.com/' + repos.gitee : '',
   };
 }
 
 async function showAbout() {
   const urls = repoUrls();
-  const hasGitee = !!urls.gitee;
-  const buttons = hasGitee ? ['复制 GitHub 地址', '复制 Gitee 地址', '确定'] : ['复制 GitHub 地址', '确定'];
   const { response } = await showBox({
     type: 'info',
     title: '关于 DSH Desktop',
     message: 'DSH Desktop ' + APP_VERSION,
     detail: 'DeepSeek Harness 桌面客户端\n\nagent 版本：' + dshVersion() + '（' + dshVersionSource() + '）\n数据目录：' + userDataDir + '\nDSH_HOME：' + (isWslMode() ? 'WSL：' + wslBackend.installDirLinux() : (dshHome || '（dsh 默认）')) +
-      '\n\n项目仓库：\n  GitHub: ' + urls.github + (hasGitee ? '\n  Gitee:  ' + urls.gitee : ''),
-    buttons,
+      '\n\n项目仓库：\n  GitHub: ' + urls.github,
+    buttons: ['复制 GitHub 地址', '确定'],
   });
   if (response === 0) clipboard.writeText(urls.github);
-  else if (hasGitee && response === 1) clipboard.writeText(urls.gitee);
 }
 
 function registerChromeIpc() {

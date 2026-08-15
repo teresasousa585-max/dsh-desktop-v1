@@ -27,7 +27,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { compareVersions } = require('./updater');
 
-const DEFAULT_REPOS = { github: 'teresasousa585-max/dsh-desktop-v1', gitee: '' };
+const DEFAULT_REPOS = { github: 'teresasousa585-max/dsh-desktop-v1' };
 const REPO_SLUG = /^[A-Za-z0-9_.-]{1,64}\/[A-Za-z0-9_.-]{1,64}$/;
 const MIN_VALID_BYTES = 64 * 1024 * 1024; // 完整安装包远大于 64MB，防止把错误页当 exe
 
@@ -39,24 +39,21 @@ function isPortable() {
 function resolveRepos(repos) {
   const r = repos && typeof repos === 'object' ? repos : {};
   const github = REPO_SLUG.test(String(r.github || '')) ? r.github : DEFAULT_REPOS.github;
-  const gitee = REPO_SLUG.test(String(r.gitee || '')) ? r.gitee : DEFAULT_REPOS.gitee;
-  return { github, gitee };
+  return { github };
 }
 
 function apiEndpoints() {
   if (process.env.DSH_DESKTOP_RELEASE_API) {
     return [{ name: '自定义镜像', url: process.env.DSH_DESKTOP_RELEASE_API }];
   }
-  const { github, gitee } = resolveRepos();
-  const endpoints = [
+  const { github } = resolveRepos();
+  return [
     {
       name: 'GitHub',
       url: `https://api.github.com/repos/${github}/releases/latest`,
       headers: { Accept: 'application/vnd.github+json' },
     },
   ];
-  if (gitee) endpoints.push({ name: 'Gitee', url: `https://gitee.com/api/v5/repos/${gitee}/releases/latest` });
-  return endpoints;
 }
 
 // --- HTTP ----------------------------------------------------------------
