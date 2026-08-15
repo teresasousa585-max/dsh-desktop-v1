@@ -14,8 +14,7 @@ A ready-to-use Windows desktop client wrapping [@deepseek-ai/dsh](https://www.np
 
 | File | Description | Size |
 | --- | --- | --- |
-| [Portable exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-1.0.1-portable-x64.exe) | No install needed, double-click to run | ~126 MB |
-| [Setup exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.1-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
+| [Setup exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.2-x64.exe) | Installs to system, creates shortcuts | ~126 MB |
 
 **First run**: A loading animation appears briefly, then the DeepSeek Harness Web UI loads. If you haven't configured an API Key yet, set it up in the UI to get started (same as the `dsh` CLI).
 

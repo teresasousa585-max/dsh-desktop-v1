@@ -10,7 +10,7 @@ window.__ModuleLoader__.load({
 		let react_jsx_runtime = require("react/jsx-runtime");
 		/** Fallback prefs used whenever the settings document is unreachable or malformed. */
 		const SIDEBAR_PREFS_DEFAULTS = {
-			openByDefault: true,
+			openByDefault: false,
 			defaultWidthPercent: 30,
 			autoOpenSubagent: true,
 			autoOpenJobs: true,

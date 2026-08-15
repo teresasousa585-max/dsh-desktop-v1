@@ -3,6 +3,14 @@
 DeepSeek Harness（dsh）的 Windows 桌面客户端：内置独立 Node 运行时与 dsh CLI，
 一键启动 Web UI。
 
+## [1.0.2] — 2026-08-16
+
+### 变更
+- **移除桌宠功能（harness-pet）**：删除内置 bundle 插件、启动同步条目与相关文档，应用内不再有鲸鱼桌宠。
+- **dsh-better-sidebar 默认折叠**：新会话默认不再自动展开侧边栏/底部面板（`openByDefault` 默认值改为关闭；已有会话布局保持不变，可在设置中开启）。
+- **只发布安装版**：构建配置移除 portable 目标，仅产出 `DSH-Desktop-Setup-<version>-x64.exe`。
+- **识图 API Key 说明**：`dsh-vision` 的 apiKey 为 secret 字段，保存后设置页不回显属正常行为；密钥实际已保存在 `~/.dsh/settings.yaml`。
+
 ## [1.0.1] — 2026-08-16
 
 ### 变更

@@ -54,7 +54,7 @@ function resolveSidebarConfig(config) {
 }
 /** Schemastery schema for the user-facing preferences (validated by the settings service). */
 const PrefsSchema = z.object({
-	openByDefault: z.boolean().default(true),
+	openByDefault: z.boolean().default(false),
 	defaultWidthPercent: z.number().step(1).min(20).max(60).default(30),
 	autoOpenSubagent: z.boolean().default(true),
 	autoOpenJobs: z.boolean().default(true),

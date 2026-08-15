@@ -50,18 +50,9 @@ extraResources:
 win:
   icon: build/icon.png
   target:
-    - target: portable
-      arch:
-        - x64
     - target: nsis
       arch:
         - x64
-
-portable:
-  artifactName: DSH-Desktop-${version}-portable-${arch}.${ext}
-  # 稳定缓存目录名：配合 scripts/patch-portable-template.js 复用已解压目录，
-  # 避免每次启动都解压 app-64.7z（Defender 扫描 2.4 万文件导致分钟级冷启动）。
-  unpackDirName: dsh-desktop-portable
 
 nsis:
   artifactName: DSH-Desktop-Setup-${version}-${arch}.${ext}
