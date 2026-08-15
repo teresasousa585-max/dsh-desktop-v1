@@ -8,3 +8,9 @@ data/
 build/*
 !build/icon.ico
 !build/icon.png
+
+# 本地构建日志/进程标记（勿入库）
+build*.log
+build*.err
+build*.pid
+
