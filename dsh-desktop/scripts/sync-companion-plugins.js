@@ -90,7 +90,7 @@ function syncPlugins(home, dryRun) {
     }
   }
 
-  // v0.3.5 起插件市场整体切换为 zat-dsh-engine（MIT）：
+  // 插件市场由 zat-dsh-engine（MIT）提供：
   // 清理旧版 @deepseek-ai/dsh-plugin-marketplace 的同步副本与 patch 行。
   const oldPkg = path.join(profileDir, 'node_modules', '@deepseek-ai', 'dsh-plugin-marketplace');
   if (fs.existsSync(oldPkg)) {

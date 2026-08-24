@@ -7,7 +7,18 @@ window.__ModuleLoader__.load({
 
 		const react = require("react");
 		const { jsx, jsxs } = require("react/jsx-runtime");
-		const { bindSnapshotSelector } = require("@deepseek-ai/dsh-client-web-react");
+
+		// dsh-client-web-react stopped being a platform seed in newer Harness
+		// builds. Keep this plugin compatible with both old and new shells by
+		// implementing the tiny snapshot bridge with React itself.
+		function bindSnapshotSelector(source) {
+			const subscribe = (listener) => source.subscribe(listener);
+			const getSnapshot = () => source.getSnapshot();
+			return function useSelector(selector) {
+				const snapshot = react.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+				return selector(snapshot);
+			};
+		}
 
 		// ------------------------------------------------------------------
 		// Settings

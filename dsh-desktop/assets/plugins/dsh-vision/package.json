@@ -45,7 +45,6 @@
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-client-ui-primitives": "*",
     "@deepseek-ai/dsh-client-ui-settings": "*",
-    "@deepseek-ai/dsh-client-web-react": "*",
     "@deepseek-ai/dsh-settings": "*",
     "react": ">=18"
   },

@@ -1,7 +1,7 @@
 'use strict';
 
 // 构建前语法预检（prepack / predist 自动执行）。
-// v0.3.8 事故：main.js 中 `async` 关键字与 function 声明被注释拆开，
+// 历史事故：main.js 中 `async` 关键字与 function 声明被注释拆开，
 // 打包出启动即抛 ReferenceError: async is not defined 的安装包。
 // 该类问题 node --check 查不出来（孤立 async 是合法的表达式语句，
 // 错误发生在运行时），因此本脚本额外做模式扫描。

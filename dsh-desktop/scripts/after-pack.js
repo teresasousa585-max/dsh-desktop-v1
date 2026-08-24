@@ -5,7 +5,7 @@
 // electron-builder's file copier strips nested node_modules directories from
 // extraResources, but the bundled npm CLI needs its own bundled deps
 // (graceful-fs, semver, ...). Copy vendor/npm verbatim into the packed app
-// after packaging; both the portable and NSIS targets then archive this copy.
+// after packaging so the NSIS target contains a complete npm runtime.
 //
 // Also prunes pure-redundant files out of the packed app to shrink install
 // size/time WITHOUT touching anything that runs:
@@ -16,11 +16,6 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-
-// Portable cache patch must be applied before electron-builder compiles the
-// NSIS portable target; doing it here covers direct `electron-builder` runs,
-// not just `npm run dist`.
-require('./patch-portable-template');
 
 // Patch the bundled dsh-session event vocabulary so plugin events
 // (dsh-agent-teams / dsh-message-edit / dsh-web-search-exa) are accepted by

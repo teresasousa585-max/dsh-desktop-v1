@@ -1,81 +1,64 @@
 # DSH Desktop · Ethereal Edition
 
-> 把 DeepSeek Harness 塞进 Windows 桌面的一台「独立工作站」。
-> 双击即用，自带运行时；不装 Node、不敲命令，agent 照样干活。
+DeepSeek Harness 的 Windows 桌面客户端。内置 Node.js 与可离线启动的 Harness，提供原生窗口、托盘、背景主题、自动更新和一组桌面增强插件。
 
----
+当前桌面版：**1.1.0**
 
-## 它是什么
+## 与官方 Harness 的关系
 
-DSH Desktop 是 DeepSeek Harness（dsh）的桌面外壳，也是我（Ethereal）的定制版。
-它把原本要在终端里敲命令才能拉起来的 agent 工作台，变成一个**有窗口、有托盘、会自更新**的原生应用。
+本仓库不是 DeepSeek Harness 源码的副本，而是一个 Electron 桌面宿主：
 
-**一句话对比官方 Web 版**：官方给你一个网页，这里给你一个「程序」。
+- `dsh-desktop/` 内置经过验证的 `@deepseek-ai/dsh 0.1.0-rc.6` 作为离线兜底。
+- 应用启动后可在用户确认下把官方最新版安装到数据目录 `agent/`；运行时优先使用该更新层，失败可回退到内置版。
+- 新版官方 Harness 采用冻结的客户端平台模块表。内置客户端插件不再运行时依赖已移除的 `@deepseek-ai/dsh-client-web-react`。
+- 桌面宿主启动 `dsh web` 时会在支持的版本上传入 `--no-open`，避免额外弹出系统浏览器。
 
----
+这种两层结构是离线兜底与官方更新机制，不是重复安装目录。仓库不提交 `node_modules/`、`vendor/`、`dist/` 或运行数据。
 
-## 能干什么
+## 主要功能
 
-| 能力 | 说明 |
-| --- | --- |
-| 零依赖启动 | 内置 Node 运行时 + dsh 全家桶，双击即用，离线可用 |
-| 原生窗口 | 无边框玻璃栏、系统托盘、关闭最小化到托盘 |
-| 会话管理 | 多会话并行、文件改动追踪、一键还原 |
-| 识图 | 纯文本模型也能看图（任意 OpenAI 兼容 VLM） |
-| 插件生态 | 内置插件市场 + 运行时注入器，装插件不重启 |
-| 微信遥控 | 走官方 ClawBot 通道，在微信里指挥 agent |
-| 自动更新 | agent 与客户端都能自动更新，失败自动回退 |
-| 极简预设 | 面向 Windows 的 minimal 预设：PowerShell 替代 bash |
-
----
+- 无边框原生窗口、系统托盘、关闭到托盘与异常恢复。
+- 默认图片背景、深蓝半透明配色，并可从标题栏菜单更换或恢复背景。
+- 官方 Harness 与桌面客户端分别检查更新，失败保持旧版。
+- 文件变化查看与安全回退、会话浮窗、完成通知。
+- 识图、自定义提示词、第三方模型思考强度、余额与 WSL 设置。
+- VS Code 风格侧边栏、终端、文件树、Git、HTML 与端口预览。
+- OpenClaw/ClawBot 微信桥接插件。
 
 ## 安装
 
-只发布**安装版**（NSIS 安装器）：
+安装包从 [GitHub Releases](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest) 下载。
 
-| 渠道 | 下载 |
-| --- | --- |
-| GitHub Release | [DSH-Desktop-Setup-1.0.2-x64.exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.2-x64.exe) |
-
-- 安装后数据目录：`%APPDATA%\DSH Desktop\`
-- 想换配置位置：启动前设置环境变量 `DSH_HOME`
-
----
-
-## 快速上手
-
-1. 安装并启动，等它进入 Web UI。
-2. 首次使用在设置里填 DeepSeek API Key（或直接沿用 `~/.dsh/.credentials.yaml`）。
-3. 新会话默认「极简灰度」预设：PowerShell 环境、工具精简、侧边栏默认收起。
-4. 想看图：设置 → 识图插件，填 baseURL / key / model（默认智谱免费 `glm-4.6v-flash`）。
-5. 想用微信遥控：设置 → ClawBot，扫码绑定后就能在微信里发任务。
-
----
+- 安装版数据目录：`%APPDATA%\DSH Desktop\`
+- Harness 配置默认复用 `~\.dsh`
+- 可通过 `DSH_HOME` 指定其他 Harness 配置目录
 
 ## 从源码构建
 
+要求 Windows 10/11、Node.js 22.19+ 或 24+、npm。
+
 ```powershell
 cd dsh-desktop
-npm install
-npm run fetch-runtime   # 下载内置 node + npm
-npm run dist            # 产出 dist\DSH-Desktop-Setup-<版本>-x64.exe
+npm ci
+npm run fetch-runtime
+npm run pack     # 生成未安装目录，用于验证
+npm run dist     # 生成 NSIS 安装包
 ```
 
-> 默认只出安装版；需要便携版可自行改 `electron-builder.yml`。
+生成目录均可安全删除并重新创建：
 
----
+- `dsh-desktop/node_modules/`
+- `dsh-desktop/vendor/`
+- `dsh-desktop/dist/`
 
-## 仓库构成
+## 仓库结构
 
-| 目录 | 内容 |
+| 路径 | 内容 |
 | --- | --- |
-| `dsh-desktop/` | Electron 桌面壳、构建脚本、内置配套插件 |
-| `openclaw-dsh-bridge/` | 微信 ClawBot → DSH 的桥接插件 |
-
----
+| `dsh-desktop/` | Electron 宿主、构建脚本、背景资源和内置插件 |
+| `openclaw-dsh-bridge/` | ClawBot/微信到 DSH 会话的桥接插件 |
+| `dsh-desktop/docs/` | 预设、许可、WSL 与排障说明 |
 
 ## 许可
 
-- MIT License
-- 维护者：Ethereal
-- 内置第三方插件均为 MIT，明细见 `dsh-desktop/docs/attributions.md`
+本项目使用 MIT License。DeepSeek Harness 与内置第三方组件的来源和许可见 `dsh-desktop/docs/attributions.md`。

@@ -112,6 +112,60 @@ let pickerBrowseOverlay = null; // koffi 预检失败时注入的目录选择器
 let epermRepairAttempted = false; // EPERM/symlink 自愈每次运行只尝试一次
 
 // ---------------------------------------------------------------------------
+// Appearance background: the packaged default lives under assets/backgrounds;
+// user selections are copied into userData so they survive upgrades and never
+// require the renderer to read arbitrary local files.
+// ---------------------------------------------------------------------------
+const BACKGROUND_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp']);
+const BACKGROUND_MAX_BYTES = 25 * 1024 * 1024;
+
+function backgroundDir() {
+  return path.join(userDataDir, 'backgrounds');
+}
+
+function isManagedBackground(file) {
+  if (typeof file !== 'string' || !path.isAbsolute(file)) return false;
+  const root = path.resolve(backgroundDir());
+  const resolved = path.resolve(file);
+  return resolved.startsWith(root + path.sep);
+}
+
+function backgroundMime(file) {
+  switch (path.extname(file).toLowerCase()) {
+    case '.png': return 'image/png';
+    case '.webp': return 'image/webp';
+    case '.gif': return 'image/gif';
+    case '.bmp': return 'image/bmp';
+    default: return 'image/jpeg';
+  }
+}
+
+function backgroundPayload() {
+  const settings = updater.loadSettings(updCtx());
+  const custom = isManagedBackground(settings.appearanceBackgroundPath)
+    && fs.existsSync(settings.appearanceBackgroundPath)
+    ? settings.appearanceBackgroundPath
+    : '';
+  const file = custom || path.join(__dirname, 'assets', 'backgrounds', '4.jpg');
+  try {
+    const stat = fs.statSync(file);
+    if (!stat.isFile() || stat.size <= 0 || stat.size > BACKGROUND_MAX_BYTES) {
+      throw new Error('背景图片大小无效');
+    }
+    const data = fs.readFileSync(file);
+    return {
+      ok: true,
+      dataUrl: `data:${backgroundMime(file)};base64,${data.toString('base64')}`,
+      name: custom ? String(settings.appearanceBackgroundName || path.basename(file)) : '4.jpg（默认）',
+      custom: !!custom,
+    };
+  } catch (err) {
+    log('appearance', '读取背景失败: ' + String((err && err.message) || err));
+    return { ok: false, dataUrl: '', name: '', custom: false, error: '背景图片无法读取' };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // 会话浮窗（分屏）：把会话弹出到独立窗口
 // ---------------------------------------------------------------------------
 const FLOAT_MAX = 8; // 浮窗总数上限，防资源滥用
@@ -787,7 +841,8 @@ async function startServer(unsafePortRetries = 4, overlays = []) {
     }
     const out = fs.createWriteStream(path.join(logsDir, 'dsh-web.log'), { flags: 'a' });
     log('dsh', `WSL 托管模式：在 ${wslBackend.installDirLinux()}/agent 内启动 dsh web`);
-    const proc = wslBackend.spawnServer();
+    const noOpen = updater.compareVersions(wslBackend.activeVersion() || '0.0.0', '0.1.0-rc.7') >= 0;
+    const proc = wslBackend.spawnServer({ noOpen });
     serverProc = proc;
     return watchServerProc(proc, out, { expectedPort: null, unsafePortRetries, overlays });
   }
@@ -802,13 +857,16 @@ async function startServer(unsafePortRetries = 4, overlays = []) {
       ));
     }
     const out = fs.createWriteStream(path.join(logsDir, 'dsh-web.log'), { flags: 'a' });
-    log('dsh', `启动: "${nodeBin}" "${bin}" web --host 127.0.0.1 --port ${webPort}`);
+    const noOpenArgs = updater.compareVersions(dshVersion(), '0.1.0-rc.7') >= 0 ? ['--no-open'] : [];
+    log('dsh', `启动: "${nodeBin}" "${bin}" web --host 127.0.0.1 --port ${webPort}${noOpenArgs.length ? ' --no-open' : ''}`);
     // --use-system-ca: 让 dsh web 进程信任系统证书库（代理/MITM 场景下内置 node 的
     // 默认 CA 无法验证，导致插件市场等对外 fetch 失败）。
     const patchArgs = overlays
       .filter((p) => typeof p === 'string' && p && fs.existsSync(p))
       .flatMap((p) => ['--patch', p]);
-    const proc = spawn(nodeBin, ['--use-system-ca', bin, 'web', '--host', '127.0.0.1', '--port', String(webPort), ...patchArgs], {
+    // Harness 新版本会在本地启动时默认打开系统浏览器。桌面端已经在
+    // BrowserWindow 内承载 Web UI，因此显式关闭浏览器自动跳转。
+    const proc = spawn(nodeBin, ['--use-system-ca', bin, 'web', '--host', '127.0.0.1', '--port', String(webPort), ...noOpenArgs, ...patchArgs], {
       cwd: userDataDir,
       env: childEnv(),
       windowsHide: true,
@@ -1712,6 +1770,55 @@ function registerChromeIpc() {
     };
   });
 
+  ipcMain.handle('dsh:background-get', (event) => {
+    if (!mainWindow || event.sender !== mainWindow.webContents) return { ok: false, error: 'unauthorized' };
+    return backgroundPayload();
+  });
+
+  ipcMain.handle('dsh:background-choose', async (event) => {
+    if (!mainWindow || event.sender !== mainWindow.webContents) return { ok: false, error: 'unauthorized' };
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: '选择 DSH Desktop 背景图片',
+      properties: ['openFile'],
+      filters: [
+        { name: '图片', extensions: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'] },
+      ],
+    });
+    if (result.canceled || !result.filePaths[0]) return { ok: false, canceled: true };
+    const source = path.resolve(result.filePaths[0]);
+    try {
+      const ext = path.extname(source).toLowerCase();
+      const stat = fs.statSync(source);
+      if (!BACKGROUND_EXTENSIONS.has(ext)) throw new Error('不支持的图片格式');
+      if (!stat.isFile() || stat.size <= 0 || stat.size > BACKGROUND_MAX_BYTES) {
+        throw new Error('图片必须小于 25 MB');
+      }
+      fs.mkdirSync(backgroundDir(), { recursive: true });
+      const destination = path.join(backgroundDir(), `background-${Date.now()}${ext}`);
+      fs.copyFileSync(source, destination);
+      const settings = updater.loadSettings(updCtx());
+      settings.appearanceBackgroundPath = destination;
+      settings.appearanceBackgroundName = path.basename(source);
+      if (!updater.saveSettings(updCtx(), settings)) throw new Error('无法保存背景设置');
+      log('appearance', '已更换背景: ' + path.basename(source));
+      return backgroundPayload();
+    } catch (err) {
+      const message = String((err && err.message) || err);
+      log('appearance', '更换背景失败: ' + message);
+      return { ok: false, error: message };
+    }
+  });
+
+  ipcMain.handle('dsh:background-reset', (event) => {
+    if (!mainWindow || event.sender !== mainWindow.webContents) return { ok: false, error: 'unauthorized' };
+    const settings = updater.loadSettings(updCtx());
+    delete settings.appearanceBackgroundPath;
+    delete settings.appearanceBackgroundName;
+    updater.saveSettings(updCtx(), settings);
+    log('appearance', '已恢复默认背景');
+    return backgroundPayload();
+  });
+
   ipcMain.on('dsh:renderer-heartbeat', (event) => {
     if (recovery) recovery.noteHeartbeat(event.sender.id);
   });
@@ -2177,7 +2284,7 @@ function removeStaleCompanionPlugins(profileModules, expectedDirs) {
 }
 
 function removeLegacyMarketplace(profileWebModules, profileDir) {
-  // v0.3.5 起插件市场整体切换为 zat-dsh-engine（MIT）：
+  // 插件市场由 zat-dsh-engine（MIT）提供：
   // 清理旧版 @deepseek-ai/dsh-plugin-marketplace 的同步副本与 patch 行。
   const oldPkg = path.join(profileWebModules, '@deepseek-ai', 'dsh-plugin-marketplace');
   try {

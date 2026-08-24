@@ -1,81 +1,56 @@
 # DSH Desktop · Ethereal Edition
 
-> A Windows-native workstation for DeepSeek Harness.
-> Double-click to run. No Node install. No terminal required.
+A Windows desktop host for DeepSeek Harness. It bundles Node.js and an offline-capable Harness fallback, then adds a native window, tray integration, backgrounds, updates, and desktop companion plugins.
 
----
+Current desktop version: **1.1.0**
 
-## What it is
+## Relationship with official Harness
 
-DSH Desktop is a desktop shell for DeepSeek Harness (dsh), customized by **Ethereal**.
-It turns the agent workbench — normally started from a terminal — into a real desktop app: native windows, system tray, self-updates.
+This repository is an Electron host, not a copy of the DeepSeek Harness source tree:
 
-**One-line difference from the official web version**: they give you a webpage; this gives you a program.
+- `dsh-desktop/` bundles the tested `@deepseek-ai/dsh 0.1.0-rc.6` release as an offline fallback.
+- With user approval, the app installs the latest official Harness under the writable `agent/` data directory. That overlay takes precedence and can be rolled back.
+- Companion client plugins follow the current frozen platform-module contract and no longer require the removed `@deepseek-ai/dsh-client-web-react` seed at runtime.
+- Supported Harness releases are launched with `--no-open`, so the Web UI appears only in the desktop window unless the user explicitly opens it in a browser.
 
----
+The two Harness layers provide rollback and offline startup. Generated dependencies, runtimes, builds, and user data are not committed.
 
 ## Highlights
 
-| Capability | Notes |
-| --- | --- |
-| Zero-dependency launch | Bundled Node runtime + full dsh stack, works offline |
-| Native window | Frameless glass bar, tray icon, close-to-tray |
-| Session management | Parallel sessions, file-change tracking, one-click revert |
-| Vision | Text-only models can still read images (any OpenAI-compatible VLM) |
-| Plugin ecosystem | Built-in plugin marketplace + runtime injector, no restarts |
-| WeChat remote | Drive the agent from WeChat via the official ClawBot channel |
-| Auto-update | Agent and client updates with automatic rollback |
-| Minimal preset | Windows-friendly preset: PowerShell instead of bash |
-
----
+- Frameless native window, system tray, close-to-tray, and crash recovery.
+- Image background with a readable dark-blue glass palette; change or reset it from the title-bar menu.
+- Separate official Harness and desktop-client update flows with rollback.
+- File-change review and safe revert, detached conversation windows, and completion notifications.
+- Vision, custom prompts, third-party reasoning controls, balance, and WSL settings.
+- VS Code-like sidebar with files, terminal, Git, HTML, and local-port previews.
+- OpenClaw/ClawBot WeChat bridge.
 
 ## Install
 
-Only the **installer build** (NSIS) is published:
-
-| Channel | Download |
-| --- | --- |
-| GitHub Release | [DSH-Desktop-Setup-1.0.2-x64.exe](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest/download/DSH-Desktop-Setup-1.0.2-x64.exe) |
-
-- Data directory: `%APPDATA%\DSH Desktop\`
-- Override config location: set `DSH_HOME` before launching
-
----
-
-## Quick start
-
-1. Install and launch, wait for the Web UI.
-2. Add a DeepSeek API Key in settings (or reuse `~/.dsh/.credentials.yaml`).
-3. New sessions use the "minimal grayscale" preset: PowerShell, slim tools, sidebar collapsed.
-4. For image understanding: Settings → Vision, fill baseURL / key / model (default free `glm-4.6v-flash`).
-5. For WeChat control: Settings → ClawBot, scan to bind, then send tasks from WeChat.
-
----
+Download the installer from [GitHub Releases](https://github.com/teresasousa585-max/dsh-desktop-v1/releases/latest).
 
 ## Build from source
 
+Requires Windows 10/11, Node.js 22.19+ or 24+, and npm.
+
 ```powershell
 cd dsh-desktop
-npm install
-npm run fetch-runtime   # download bundled node + npm
-npm run dist            # produces dist\DSH-Desktop-Setup-<version>-x64.exe
+npm ci
+npm run fetch-runtime
+npm run pack
+npm run dist
 ```
 
-> Installer-only by default; tweak `electron-builder.yml` for a portable build.
-
----
+`node_modules/`, `vendor/`, and `dist/` are generated and can be safely recreated.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `dsh-desktop/` | Electron shell, build scripts, bundled companion plugins |
-| `openclaw-dsh-bridge/` | WeChat ClawBot → DSH bridge plugin |
-
----
+| `dsh-desktop/` | Electron host, build scripts, background assets, companion plugins |
+| `openclaw-dsh-bridge/` | ClawBot/WeChat to DSH session bridge |
+| `dsh-desktop/docs/` | Presets, licenses, WSL, and troubleshooting notes |
 
 ## License
 
-- MIT License
-- Maintainer: Ethereal
-- Bundled third-party plugins are MIT; details in `dsh-desktop/docs/attributions.md`
+MIT. See `dsh-desktop/docs/attributions.md` for bundled third-party components.

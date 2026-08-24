@@ -26,8 +26,8 @@
    $env:DSH_DESKTOP_DEBUG = '1'
    npm start
    ```
-   或打包便携版后双击验证：`npm run dist` → `dist/DSH-Desktop-*-portable-x64.exe`。
-3. 日志位置：便携版 `data\logs\`，安装版 `%APPDATA%\DSH Desktop\logs\`；菜单「打开日志目录」可直达。关键文件：`desktop.log`（`[wsl]` 前缀行 = WSL 后端动作）、`dsh-web.log`、`update.log`。
+   或生成安装包后验证：`npm run dist` → `dist/DSH-Desktop-Setup-*-x64.exe`。
+3. 日志位置：安装版 `%APPDATA%\DSH Desktop\logs\`；菜单「打开日志目录」可直达。关键文件：`desktop.log`（`[wsl]` 前缀行 = WSL 后端动作）、`dsh-web.log`、`update.log`。
 
 ## 2. 分步验证
 

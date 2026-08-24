@@ -290,11 +290,11 @@ function activeVersion() {
  * stdout（含 `dsh web: http://127.0.0.1:<port>` 就绪行）透传给调用方
  * （main.js 复用本地模式的 URL 解析与超时逻辑）；pid 写入 <dir>/dsh.pid。
  */
-function spawnServer() {
+function spawnServer({ noOpen = false } = {}) {
   const dir = state.installDir;
   // env -u 清掉宿主 harness 残留（DSH_WEB_URL / 会话变量），避免 WSL 内 dsh 误判；
   // DSH_HOME 指向安装目录（profiles/sessions 数据与 agent 同目录）。
-  const cmd = `sh -lc 'cd ${dir} && rm -f dsh.pid && echo $$ > dsh.pid && exec env -u DSH_WEB_URL -u DSH_SESSION_ID -u DSH_SESSION_JSONL -u DSH_SHELL -u NODE_OPTIONS DSH_HOME=${dir} node ${agentBin()} web --host 127.0.0.1 --port 0'`;
+  const cmd = `sh -lc 'cd ${dir} && rm -f dsh.pid && echo $$ > dsh.pid && exec env -u DSH_WEB_URL -u DSH_SESSION_ID -u DSH_SESSION_JSONL -u DSH_SHELL -u NODE_OPTIONS DSH_HOME=${dir} node ${agentBin()} web --host 127.0.0.1 --port 0${noOpen ? ' --no-open' : ''}'`;
   log(`启动 WSL dsh web: ${cmd}`);
   const proc = spawn(WSL_EXE, ['-d', state.distro, '-e', 'sh', '-lc', cmd], {
     windowsHide: true,
