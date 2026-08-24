@@ -32,7 +32,7 @@ window.__ModuleLoader__.load({
 
     const L = {
       nav: "识图插件（view_image）",
-      navSub: "为纯文本模型提供识图能力。填写任意 OpenAI 兼容 VLM 端点的地址与密钥后，会话中即可调用 view_image 工具。",
+      navSub: "为纯文本模型提供识图能力；当前模型原生支持图片时会自动停用，避免重复调用。填写任意 OpenAI 兼容 VLM 端点与密钥后，纯文本会话可调用 view_image。",
       baseURLLabel: "API 地址",
       baseURLHint: "OpenAI 兼容 base URL，例如 https://open.bigmodel.cn/api/paas/v4 或 http://localhost:11434/v1",
       apiKeyLabel: "API 密钥",

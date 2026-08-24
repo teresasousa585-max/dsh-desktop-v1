@@ -1,5 +1,19 @@
 # Changelog — DSH Desktop
 
+## [1.1.1] — 2026-08-24
+
+### Vision routing
+
+- Recognize `deepseek-v4-flash-vision-exp` as a native image-input model even when an older Harness adapter still reports text-only metadata.
+- Hide the external `view_image` tool and its text-only prompt from native vision routes, while retaining it for text-only and unknown models.
+- Guard tool execution as a second line of defense so native vision requests never spend the configured third-party vision API quota.
+
+### Reliability
+
+- Added regression tests for model selection, capability metadata, stale-adapter fallback, and text-only routing.
+- Added a non-REST GitHub latest-release fallback so unauthenticated API rate limiting no longer disables desktop update checks.
+- Made both package targets populate the bundled Node.js and npm runtime before electron-builder runs, preventing a successful-looking but unbootable build after cleaning generated files.
+
 ## [1.1.0] — 2026-08-24
 
 ### Compatibility

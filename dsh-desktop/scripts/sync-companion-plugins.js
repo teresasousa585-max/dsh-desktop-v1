@@ -42,7 +42,7 @@ const COMPANION_PLUGINS = [
 
 const PLUGIN_FILES = [
   'package.json', 'cordis.patch.yml', 'LICENSE', 'README.md', 'README.zh.md',
-  'lib/index.js', 'lib/client.js', 'lib/vlm.js', 'lib/typert.host.js', 'lib/typert.host.d.ts',
+  'lib/index.js', 'lib/client.js', 'lib/vlm.js', 'lib/capability.js', 'lib/typert.host.js', 'lib/typert.host.d.ts',
   'dsh.plugin.json',
 ];
 

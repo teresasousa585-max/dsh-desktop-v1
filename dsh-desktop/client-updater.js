@@ -51,7 +51,10 @@ function apiEndpoints() {
     {
       name: 'GitHub',
       url: `https://api.github.com/repos/${github}/releases/latest`,
-      headers: { Accept: 'application/vnd.github+json' },
+      headers: {
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
     },
   ];
 }
@@ -78,6 +81,45 @@ function httpGetJson(url, headers = {}, timeoutMs = 20000, redirects = 0) {
       });
       res.on('end', () => {
         try { resolve(JSON.parse(body)); } catch { reject(new Error('JSON 解析失败')); }
+      });
+    });
+    req.setTimeout(timeoutMs, () => req.destroy(new Error('请求超时')));
+    req.on('error', reject);
+  });
+}
+
+// GitHub REST 的未登录额度很低，达到额度后会返回 403。Release 的网页
+// `/releases/latest` 不依赖 REST 配额，并会 302 到实际 tag；从 Location
+// 解析版本后即可按本项目稳定的 artifactName 规则构造下载地址。
+function resolveGithubWebRelease(repo, timeoutMs = 20000) {
+  const latestUrl = `https://github.com/${repo}/releases/latest`;
+  return new Promise((resolve, reject) => {
+    const req = https.get(latestUrl, { headers: { 'User-Agent': 'DSH-Desktop' } }, (res) => {
+      const location = res.headers.location;
+      res.resume();
+      if (!(res.statusCode >= 300 && res.statusCode < 400 && location)) {
+        return reject(new Error('GitHub latest 网页未返回版本重定向（HTTP ' + res.statusCode + '）'));
+      }
+      let tag;
+      try {
+        const finalUrl = new URL(location, latestUrl);
+        const match = finalUrl.pathname.match(/\/releases\/tag\/([^/]+)\/?$/);
+        if (match) tag = decodeURIComponent(match[1]);
+      } catch {}
+      if (!tag) return reject(new Error('无法从 GitHub latest 重定向解析版本'));
+      const version = tag.replace(/^v/i, '');
+      if (!version) return reject(new Error('GitHub latest 版本号为空'));
+      const base = `https://github.com/${repo}/releases/download/${encodeURIComponent(tag)}`;
+      // 当前发布策略只上传 NSIS 安装包。不能为旧便携版伪造一个不存在的
+      // portable URL，否则下载 404 后还可能被误认为可原地替换的可执行文件。
+      const names = [`DSH-Desktop-Setup-${version}-x64.exe`];
+      resolve({
+        source: 'GitHub 网页回退',
+        version,
+        name: tag,
+        body: '',
+        htmlUrl: new URL(location, latestUrl).toString(),
+        assets: names.map((name) => ({ name, url: `${base}/${encodeURIComponent(name)}`, size: 0 })),
       });
     });
     req.setTimeout(timeoutMs, () => req.destroy(new Error('请求超时')));
@@ -125,6 +167,18 @@ async function checkLatest(ctx, currentVersion) {
     } catch (err) {
       errors.push(`${ep.name}: ${err.message}`);
       ctx.log('client-update', `[${ep.name}] 查询失败: ${err.message}`);
+    }
+  }
+  if (candidates.length === 0 && !process.env.DSH_DESKTOP_RELEASE_API) {
+    try {
+      const { github } = resolveRepos();
+      const rel = await resolveGithubWebRelease(github);
+      rel.isNewer = compareVersions(rel.version, currentVersion) > 0;
+      candidates.push(rel);
+      ctx.log('client-update', `[${rel.source}] latest=${rel.version} 当前=${currentVersion}（REST 不可用时启用）`);
+    } catch (err) {
+      errors.push(`GitHub 网页回退: ${err.message}`);
+      ctx.log('client-update', `[GitHub 网页回退] 查询失败: ${err.message}`);
     }
   }
   if (candidates.length === 0) {
@@ -483,4 +537,13 @@ function applyUpdate(ctx, pending) {
   return { script, logFile };
 }
 
-module.exports = { checkLatest, selectAsset, downloadRelease, applyUpdate, isPortable, resolveRepos, DEFAULT_REPOS };
+module.exports = {
+  checkLatest,
+  selectAsset,
+  downloadRelease,
+  applyUpdate,
+  isPortable,
+  resolveRepos,
+  resolveGithubWebRelease,
+  DEFAULT_REPOS,
+};

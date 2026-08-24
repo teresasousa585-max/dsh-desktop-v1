@@ -2392,7 +2392,7 @@ function syncCompanionPlugins() {
     const bundleNames = new Set();
     const copyFiles = [
       'package.json', 'cordis.patch.yml', 'LICENSE', 'README.md', 'README.zh.md',
-      'lib/index.js', 'lib/client.js', 'lib/vlm.js', 'lib/typert.host.js', 'lib/typert.host.d.ts',
+      'lib/index.js', 'lib/client.js', 'lib/vlm.js', 'lib/capability.js', 'lib/typert.host.js', 'lib/typert.host.d.ts',
       'dsh.plugin.json',
     ];
     // 配套插件引用了不在 dsh 核心依赖闭包里的 npm 包时（例如 dsh-better-sidebar
@@ -2624,6 +2624,8 @@ function applyImageSendFix() {
     path.join(userDataDir, 'agent', 'node_modules', '@deepseek-ai', 'dsh-host-apiproxy', 'lib', 'index.js'),
   ];
   const HELPER_MARKER = 'async function describeImagesWithVision(ctx, content)';
+  const NATIVE_VISION_MARKER = 'const modelAcceptsImages = modelInfo.inputModalities?.includes("image") === true || current.model === "deepseek-v4-flash-vision-exp";';
+  const OLD_TEXT_ONLY_GATE = 'if (modelInfo.inputModalities !== void 0 && !modelInfo.inputModalities.includes("image")) {';
   const HELPER_ANCHOR = '/** Validate one prompt as a batch before publishing any durable image object. */';
   const HELPER = `
 /** DSH Desktop: reuse the dsh-vision VLM config to describe images as text so text-only models can "see" them. */
@@ -2690,7 +2692,8 @@ async function describeImagesWithVision(ctx, content) {
 }
 `;
   const GATE_MARKER = 'if (modelInfo.inputModalities !== void 0 && !modelInfo.inputModalities.includes("image")) return err(request, {';
-  const GATE_NEW = `if (modelInfo.inputModalities !== void 0 && !modelInfo.inputModalities.includes("image")) {
+  const GATE_NEW = `const modelAcceptsImages = modelInfo.inputModalities?.includes("image") === true || current.model === "deepseek-v4-flash-vision-exp";
+						if (!modelAcceptsImages) {
 							try {
 								admittedContent = await describeImagesWithVision(ctx, content);
 							} catch (error) {
@@ -2707,7 +2710,15 @@ async function describeImagesWithVision(ctx, content) {
     try {
       let src = fs.readFileSync(file, 'utf8');
       if (src.includes(HELPER_MARKER)) {
-        log('boot', '识图发送补丁: 已应用，跳过 ' + file);
+        // 迁移旧版补丁：旧 DeepSeek adapter 会把所有模型（包括新视觉
+        // Exp）上报为 text。仅按 inputModalities 判断会误走第三方 VLM。
+        if (!src.includes(NATIVE_VISION_MARKER) && src.includes(OLD_TEXT_ONLY_GATE)) {
+          src = src.replace(OLD_TEXT_ONLY_GATE, NATIVE_VISION_MARKER + '\n\t\t\t\t\t\tif (!modelAcceptsImages) {');
+          fs.writeFileSync(file, src, { encoding: 'utf8' });
+          log('boot', '识图发送补丁: 已加入原生视觉模型判断 ' + file);
+        } else {
+          log('boot', '识图发送补丁: 已应用，跳过 ' + file);
+        }
         continue;
       }
       // 1) 插入转述 helper（此后所有索引必须基于插入后的 src 重新计算）

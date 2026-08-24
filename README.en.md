@@ -2,7 +2,7 @@
 
 A Windows desktop host for DeepSeek Harness. It bundles Node.js and an offline-capable Harness fallback, then adds a native window, tray integration, backgrounds, updates, and desktop companion plugins.
 
-Current desktop version: **1.1.0**
+Current desktop version: **1.1.1**
 
 ## Relationship with official Harness
 
@@ -12,6 +12,7 @@ This repository is an Electron host, not a copy of the DeepSeek Harness source t
 - With user approval, the app installs the latest official Harness under the writable `agent/` data directory. That overlay takes precedence and can be rolled back.
 - Companion client plugins follow the current frozen platform-module contract and no longer require the removed `@deepseek-ai/dsh-client-web-react` seed at runtime.
 - Supported Harness releases are launched with `--no-open`, so the Web UI appears only in the desktop window unless the user explicitly opens it in a browser.
+- Native image-input models receive images directly; the external `view_image` fallback is exposed only to text-only routes.
 
 The two Harness layers provide rollback and offline startup. Generated dependencies, runtimes, builds, and user data are not committed.
 

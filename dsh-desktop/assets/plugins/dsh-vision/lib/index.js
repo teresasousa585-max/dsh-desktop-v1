@@ -10,8 +10,13 @@ import { defineTool } from '@deepseek-ai/dsh-tools';
 import z from '@deepseek-ai/schemastery';
 import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings';
 import { visionChat } from './vlm.js';
+import {
+    selectionFromAgent,
+    selectionFromAssembly,
+    selectionSupportsNativeVision,
+} from './capability.js';
 export const name = 'dsh-vision';
-export const inject = ['tools', 'systemPrompt', 'settings'];
+export const inject = ['tools', 'systemPrompt', 'settings', 'llm'];
 const DEFAULT_BASE_URL = 'https://open.bigmodel.cn/api/paas/v4';
 /** Zhipu's free tier gets congested (HTTP 429 code 1305); older free models still answer. */
 const DEFAULT_FREE_FALLBACKS = ['glm-4.1v-thinking-flash', 'glm-4v-flash'];
@@ -41,6 +46,9 @@ const TEXT_OUTPUT = {
     render: (_args, value) => [{ type: 'text', text: String(value) }],
 };
 export function apply(ctx, config) {
+    // Last resolved route capability per live agent. The assembly hook updates
+    // this before a tool can execute, including model changes within a session.
+    const nativeVisionAgents = new WeakMap();
     liveConfig = () => config || {};
     // settings 已在本插件 inject 中声明，apply 时服务必在；直接同步注册并
     // try/catch：存储的 dsh-vision 配置节非法会让 register() 抛异常 → 插件
@@ -103,6 +111,14 @@ export function apply(ctx, config) {
         timeoutMs: current().timeoutMs,
         isConcurrencySafe: () => true,
         execute: async (args, exec) => {
+            const selected = nativeVisionAgents.get(exec.agent) ?? {
+                selection: selectionFromAgent(exec.agent),
+                native: undefined,
+            };
+            const native = selected.native ?? await selectionSupportsNativeVision(ctx, selected.selection, exec.signal);
+            if (native) {
+                throw new Error(`view_image: disabled for native image-capable model ${selected.selection.model || '(selected route)'}; attach or pass the image directly to the model instead.`);
+            }
             const input = args;
             const source = typeof input.source === 'string' ? input.source : '';
             if (source === '')
@@ -131,4 +147,21 @@ export function apply(ctx, config) {
         order: 116,
         text: PROMPT_TEXT,
     }), 'dsh-vision.prompt');
+    // Resolve after downstream model-selection listeners so assembly.variables
+    // contains the route actually used for this step. Native vision routes do
+    // not see the external tool schema or its misleading text-only prompt.
+    ctx.effect(() => ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
+        const assembled = await next();
+        const selection = selectionFromAssembly(assembled, context);
+        const native = await selectionSupportsNativeVision(ctx, selection, context.signal);
+        if (context.agent && typeof context.agent === 'object') {
+            nativeVisionAgents.set(context.agent, { selection, native });
+        }
+        if (!native) return assembled;
+        return {
+            ...assembled,
+            sections: assembled.sections.filter((section) => section.name !== 'tool:dsh-vision'),
+            tools: assembled.tools.filter((tool) => tool.name !== 'view_image'),
+        };
+    }), 'dsh-vision.native-capability-gate');
 }

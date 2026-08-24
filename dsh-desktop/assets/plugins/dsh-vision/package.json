@@ -1,7 +1,7 @@
 {
   "name": "@dsh-external/dsh-vision",
-  "version": "0.1.0",
-  "description": "DSH Desktop 内置识图插件：为纯文本 DeepSeek 提供 view_image 工具，通过任意 OpenAI 兼容 VLM 端点回答图片问题（默认智谱免费 glm-4.6v-flash，可换通义 qwen3-vl / Ollama 本地 / DeepSeek 官方识图 API）。",
+  "version": "0.2.0",
+  "description": "DSH Desktop 内置识图插件：只为纯文本模型提供 view_image；当前模型原生支持 image 时自动停用，通过任意 OpenAI 兼容 VLM 端点回答图片问题。",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
